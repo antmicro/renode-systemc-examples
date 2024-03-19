@@ -1,0 +1,80 @@
+variables:
+  WEST_VERSION: 1.2.0
+  ZEPHYR_SDK_VERSION: 0.16.5-1
+  ZEPHYR_SDK_BASENAME: zephyr-sdk-${ZEPHYR_SDK_VERSION}
+  ZEPHYR_SDK_FILENAME: zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-x86_64.tar.xz
+  ZEPHYR_VERSION: d0ae1a8b1057c0a8b510860d1cbdbb1cb79f2411
+
+stages:
+  - build
+  - test
+
+build_zephyr_binaries:
+  image: debian:12.5-slim
+  stage: build
+  tags: ['ace-x86_64']
+  script:
+    - apt-get -qqy update && apt-get install -qqy wget python3-pip python3-venv cmake git ninja-build
+    - python3 -m venv venv && source venv/bin/activate
+    - pip3 install west==${WEST_VERSION}
+    - wget --no-verbose https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZEPHYR_SDK_VERSION}/${ZEPHYR_SDK_FILENAME} && tar xf ${ZEPHYR_SDK_FILENAME} && pushd ${ZEPHYR_SDK_BASENAME} && ./setup.sh -t all -c && popd && export ZEPHYR_SDK_INSTALL_DIR=$(pwd)/${ZEPHYR_SDK_BASENAME}
+    - west init zephyrproject
+    - pushd zephyrproject/zephyr
+    - git checkout ${ZEPHYR_VERSION} && west update && west zephyr-export
+    - pip3 install -r scripts/requirements.txt
+    - west update
+    - popd
+    - mkdir -p artifacts/zephyr_binaries
+    - for i in `find examples -name "zephyr"`;
+      do
+        EXAMPLE_NAME=`echo $i | sed -e "s/examples\///" | sed -e "s/\/zephyr//"`;
+        mkdir -p examples/$EXAMPLE_NAME/bin;
+        pushd zephyrproject/zephyr;
+        west build -b stm32f401_mini ../../examples/$EXAMPLE_NAME/zephyr;
+        cp build/zephyr/zephyr.elf ../../examples/$EXAMPLE_NAME/bin/$EXAMPLE_NAME.elf;
+        cp build/zephyr/zephyr.elf ../../artifacts/zephyr_binaries/$EXAMPLE_NAME.elf;
+        rm -rf build/;
+        popd;
+      done
+  artifacts:
+    paths:
+      - artifacts/
+
+build_examples:
+  image: antmicro/renode:nightly
+  stage: build
+  tags: ['ace-x86_64']
+  script:
+    - apt -qqy update
+    - apt -qqy install libsystemc libsystemc-dev clang cmake
+    - mkdir -p build
+    - pushd build
+    - cmake .. -DUSER_RENODE_DIR=/opt/renode
+    - make CPPSTD=c++14 -j8
+    - popd
+    - mkdir -p artifacts/example_binaries
+    - for i in examples/*/; 
+      do 
+        cp $i/bin/* artifacts/example_binaries; 
+      done
+  artifacts:
+    paths:
+      - artifacts/
+
+test_examples:
+  image: antmicro/renode:nightly
+  stage: test
+  dependencies:
+    - build_examples
+  tags: ['ace-x86_64']
+  script:
+    - apt -qqy update
+    - apt -qqy install libsystemc libsystemc-dev
+    - for i in artifacts/example_binaries/*;
+      do
+        mkdir -p examples/`basename $i`/bin;
+        cp $i examples/`basename $i`/bin;
+      done
+    - pushd examples
+    - renode-test -t all_examples.yaml
+    - popd

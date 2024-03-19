@@ -1,0 +1,13 @@
+using sysbus
+$name?="stm32f401_mini"
+mach create $name
+
+$bin?=@https://dl.antmicro.com/projects/renode/systemc-examples-zephyr-transaction-delay-stm32f401_mini.elf-s_572316-f591f8f491f1f3480aa6f7284d2bdbef3bebb8d5
+
+machine LoadPlatformDescription $ORIGIN/transaction-delay.repl
+
+showAnalyzer usart1 Antmicro.Renode.Analyzers.LoggingUartAnalyzer
+
+sysbus LoadELF $bin
+sysbus LogPeripheralAccess systemc true
+systemc SystemCExecutablePath $ORIGIN/../bin/transaction-delay

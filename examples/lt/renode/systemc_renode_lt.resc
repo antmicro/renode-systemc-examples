@@ -1,0 +1,12 @@
+:name: Renode-SystemC LT example
+:description: This script illustrates Renode-SystemC TLM integration using SystemC's LT (loosely-timed) example
+
+$name?="SystemCExampleLT"
+$platform?=$ORIGIN/systemc_renode_lt.repl
+$systemc_binary?=$ORIGIN/../bin/lt
+
+using sysbus
+mach create $name
+machine LoadPlatformDescription $platform
+systemc SystemCExecutablePath $systemc_binary
+sysbus LogPeripheralAccess systemc true

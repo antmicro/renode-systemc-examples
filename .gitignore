@@ -1,0 +1,3 @@
+renode-bridge/bin/
+examples/*/bin/
+build

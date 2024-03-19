@@ -1,0 +1,8 @@
+Renode-SystemC Integration Examples
+Copyright 2024 Antmicro Ltd <www.antmicro.com>
+
+Directory examples/lt/systemc/third-party/systemc-lt-example contains parts of SystemC
+2.3.4 "LT" example developed by Accellera Systems Initiative
+8698 Elk Grove Bldv Suite 1, #114, Elk Grove, CA 95624, USA
+Copyright 2011-2022 Accellera Systems Initiative Inc. (Accellera)
+All rights reserved.

@@ -1,0 +1,13 @@
+using sysbus
+$name?="stm32f401_mini"
+mach create $name
+
+$bin?=@https://dl.antmicro.com/projects/renode/systemc-examples-zephyr-interrupts-stm32f401_mini.elf-s_573712-209c153accbf90335274ee5ae16eb9abb74d7808
+
+machine LoadPlatformDescription $ORIGIN/interrupts.repl
+
+showAnalyzer usart1 Antmicro.Renode.Analyzers.LoggingUartAnalyzer
+
+sysbus LoadELF $bin
+sysbus LogPeripheralAccess systemc true
+sysbus.systemc SystemCExecutablePath $ORIGIN/../bin/interrupts

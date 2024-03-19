@@ -1,0 +1,3 @@
+systemc: SystemC.SystemCPeripheral @ sysbus <0x100000000, +0xffffffff>
+    address: "127.0.0.1"
+    port: 4242

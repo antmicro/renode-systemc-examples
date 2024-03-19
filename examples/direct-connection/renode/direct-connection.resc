@@ -1,0 +1,10 @@
+using sysbus
+mach create "direct-connection-test"
+
+machine LoadPlatformDescription $ORIGIN/direct-connection.repl
+
+sysbus LogPeripheralAccess systemc_peripheral0 true
+sysbus LogPeripheralAccess systemc_peripheral1 true
+
+sysbus.systemc_peripheral0 SystemCExecutablePath $ORIGIN/../bin/direct-connection
+sysbus.systemc_peripheral1 SystemCExecutablePath $ORIGIN/../bin/direct-connection

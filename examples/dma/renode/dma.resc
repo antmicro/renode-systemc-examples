@@ -1,0 +1,10 @@
+# logFile $ORIGIN/hello_world-renode.log True
+
+using sysbus
+mach create "dma_test"
+
+machine LoadPlatformDescription $ORIGIN/dma.repl
+
+sysbus LogPeripheralAccess dma_systemc true
+sysbus LogPeripheralAccess memory true
+sysbus.dma_systemc SystemCExecutablePath $ORIGIN/../bin/dma

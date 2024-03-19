@@ -1,0 +1,17 @@
+memory: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x1000000
+
+systemc_peripheral0: SystemC.SystemCPeripheral @ sysbus <0x9000000, +0xffffff>
+    address: "127.0.0.1"
+    port: 4242
+    timeSyncPeriodUS: 100000
+    init:
+        AddDirectConnection 0 systemc_peripheral1
+
+systemc_peripheral1: SystemC.SystemCPeripheral @ sysbus <0x8000000, +0xffffff>
+    address: "127.0.0.1"
+    port: 4343
+    timeSyncPeriodUS: 100000
+    init:
+        AddDirectConnection 0 systemc_peripheral0
+

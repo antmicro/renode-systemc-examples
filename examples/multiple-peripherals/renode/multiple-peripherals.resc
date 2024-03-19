@@ -1,0 +1,18 @@
+using sysbus
+mach create "multiple-peripherals"
+
+$bin?=@https://dl.antmicro.com/projects/renode/systemc-examples-zephyr-multiple-peripherals-stm32f401_mini.elf-s_574416-8bc080d4e6c922e7c89a233d1f74f6d9bcb45274
+
+machine LoadPlatformDescription $ORIGIN/multiple-peripherals.repl
+
+sysbus LogPeripheralAccess systemc_peripheral_A true
+sysbus LogPeripheralAccess systemc_peripheral_B true
+sysbus LogPeripheralAccess systemc_peripheral_C true
+
+showAnalyzer usart1 Antmicro.Renode.Analyzers.LoggingUartAnalyzer
+
+sysbus.systemc_peripheral_A SystemCExecutablePath $ORIGIN/../bin/multiple-peripherals
+sysbus.systemc_peripheral_B SystemCExecutablePath $ORIGIN/../bin/multiple-peripherals
+sysbus.systemc_peripheral_C SystemCExecutablePath $ORIGIN/../bin/multiple-peripherals
+
+sysbus LoadELF $bin
