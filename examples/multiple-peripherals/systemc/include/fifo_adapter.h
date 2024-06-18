@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <cstdint>
 
 #include "tlm.h"
 #include "tlm_utils/simple_initiator_socket.h"
