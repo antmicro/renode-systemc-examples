@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2024 Antmicro
+ * Copyright (c) 2024 Silicon Labs
+*/
+
 /** \file
  *  \brief Provides the private implementation of the Peripheral class
  *  

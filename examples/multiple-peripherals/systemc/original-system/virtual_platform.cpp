@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2024 Antmicro
+ * Copyright (c) 2024 Silicon Labs
+*/
+
 /** \file
  *  \brief Contains a virtual platform for simulating a CPU connected to peripherals and executing code
  * 

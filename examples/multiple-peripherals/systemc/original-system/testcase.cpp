@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2024 Antmicro
+ * Copyright (c) 2024 Silicon Labs
+*/
+
 /** \file 
  *  Contains test software which configures the peripherals and checks execution progress and final results via the system bus interface.
  * 

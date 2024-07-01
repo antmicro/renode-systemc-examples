@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2024 Antmicro
+ * Copyright (c) 2024 Silicon Labs
+*/
+
 /** \file
  *  \brief Contains the register interface API for the peripheral.
  * 

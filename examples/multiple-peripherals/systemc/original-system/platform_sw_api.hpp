@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2024 Antmicro
+ * Copyright (c) 2024 Silicon Labs
+*/
+
 /** \file 
  *  \brief This header just defines certain platform API functions accessible by software.
  * 
