@@ -1,0 +1,7 @@
+systemc: SystemC.SystemCPeripheral @ sysbus <0x10000000, +0xfffffff>
+    address: "127.0.0.1"
+    port: 4242
+    timeSyncPeriodUS: 5000
+
+gpio: GPIOPort.MiV_CoreGPIO @ sysbus 0x20000000
+    1 -> systemc@2

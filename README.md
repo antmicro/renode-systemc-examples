@@ -193,6 +193,13 @@ single phase.
 
 ### [Multiple peripherals](examples/multiple-peripherals)
 
-Located in the /examples/multiple-peripherals/ folder, `multiple-peripherals` illustrates a possible translation of a pure SystemC simulation to
+Located in the /examples/multiple-peripherals folder, `multiple-peripherals` illustrates a possible translation of a pure SystemC simulation to
 a co-simulation with Renode, with use of most integration features. The README in
 the example directory provides more details.
+
+### [GPIO connection](examples/gpio-connection)
+
+Located in the /examples/gpio-connection folder, this basic example illustrates a SystemCPeripheral connected to an output GPIO of another peripheral.
+
+The SystemC model updates its internal state after receiving a GPIO event, sent by a `MiV_CoreGPIO` peripheral modelled in Renode. The state is then read
+through the system bus to verify that the communication finished successfully.

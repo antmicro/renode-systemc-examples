@@ -1,0 +1,8 @@
+using sysbus
+mach create "gpio-connection"
+
+machine LoadPlatformDescription $ORIGIN/gpio-connection.repl
+
+sysbus LogPeripheralAccess systemc true
+sysbus LogPeripheralAccess gpio true
+sysbus.systemc SystemCExecutablePath $ORIGIN/../bin/gpio-connection
