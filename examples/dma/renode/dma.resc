@@ -1,5 +1,3 @@
-# logFile $ORIGIN/hello_world-renode.log True
-
 using sysbus
 mach create "dma_test"
 
