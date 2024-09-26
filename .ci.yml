@@ -20,7 +20,7 @@ build_zephyr_binaries:
     - wget --no-verbose https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZEPHYR_SDK_VERSION}/${ZEPHYR_SDK_FILENAME} && tar xf ${ZEPHYR_SDK_FILENAME} && pushd ${ZEPHYR_SDK_BASENAME} && ./setup.sh -t all -c && popd && export ZEPHYR_SDK_INSTALL_DIR=$(pwd)/${ZEPHYR_SDK_BASENAME}
     - west init zephyrproject
     - pushd zephyrproject/zephyr
-    - git checkout ${ZEPHYR_VERSION} && west update && west zephyr-export
+    - git checkout ${ZEPHYR_VERSION} && west update
     - pip3 install -r scripts/requirements.txt
     - west update
     - popd

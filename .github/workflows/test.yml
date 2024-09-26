@@ -1,0 +1,153 @@
+name: test-systemc-examples
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+    inputs:
+      renode_gitrev:
+        description: 'Renode git revision'
+        required: false
+      renode_gitrepo:
+        description: 'Renode git repository'
+        required: false
+
+env:
+  WEST_VERSION: 1.2.0
+  ZEPHYR_SDK_VERSION: 0.16.5-1
+  ZEPHYR_SDK_BASENAME: zephyr-sdk-${ZEPHYR_SDK_VERSION}
+  ZEPHYR_SDK_FILENAME: zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-x86_64.tar.xz
+  ZEPHYR_VERSION: d0ae1a8b1057c0a8b510860d1cbdbb1cb79f2411
+
+jobs:
+  build-zephyr-binaries:
+    name: Build Zephyr Binaries
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get -qqy update
+          sudo apt-get install -qqy wget python3-pip python3-venv cmake git ninja-build
+
+      - name: Set up Python virtual environment
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          echo "PATH=$PATH" >> "$GITHUB_ENV"
+          pip3 install west=="$WEST_VERSION"
+
+      - name: Set up Zephyr SDK
+        run: |
+          wget --no-verbose https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${{ env.ZEPHYR_SDK_VERSION }}/${{ env.ZEPHYR_SDK_FILENAME }}
+          tar xf ${{ env.ZEPHYR_SDK_FILENAME }}
+          pushd ${{ env.ZEPHYR_SDK_BASENAME }}
+          ./setup.sh -t all -c
+          popd
+          echo "ZEPHYR_SDK_INSTALL_DIR=$(pwd)/${{ env.ZEPHYR_SDK_BASENAME }}" >> $GITHUB_ENV
+
+      - name: Get Zephyr source
+        run: |
+          west init zephyrproject
+          pushd zephyrproject/zephyr
+          git checkout ${{ env.ZEPHYR_VERSION }}
+          west update
+          echo "ZEPHYR_BASE=$PWD" >> "$GITHUB_ENV"
+          pip3 install -r scripts/requirements.txt
+          popd
+
+      - name: Build Zephyr examples
+        run: |
+          mkdir -p artifacts/zephyr_binaries
+          for i in `find examples -name "zephyr"`; do
+            EXAMPLE_NAME=`echo $i | sed -e "s/examples\///" | sed -e "s/\/zephyr//"`
+            mkdir -p examples/$EXAMPLE_NAME/bin
+            pushd zephyrproject/zephyr
+            west build -b stm32f401_mini ../../examples/$EXAMPLE_NAME/zephyr
+            cp build/zephyr/zephyr.elf ../../examples/$EXAMPLE_NAME/bin/$EXAMPLE_NAME.elf
+            cp build/zephyr/zephyr.elf ../../artifacts/zephyr_binaries/$EXAMPLE_NAME.elf
+            rm -rf build/
+            popd
+          done
+
+      - name: Upload Zephyr binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: zephyr_binaries-${{ env.ZEPHYR_VERSION }}-${{ github.run_id }}
+          path: artifacts/zephyr_binaries
+
+  build-examples:
+    name: Build Examples
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get -qqy update
+          sudo apt-get install -qqy libsystemc libsystemc-dev clang cmake
+
+      - name: Download and build Renode
+        uses: antmicro/renode-test-action@v4
+        with:
+          renode-repository: ${{ inputs.renode_gitrepo || 'https://github.com/renode/renode' }}
+          renode-revision: ${{ inputs.renode_gitrev || 'master' }}
+
+      - name: Build examples
+        run: |
+          mkdir -p build
+          pushd build
+          cmake ..
+          make CPPSTD=c++14 -j8
+          popd
+          mkdir -p artifacts/example_binaries
+          for i in examples/*/; do
+            cp "$i"/bin/* artifacts/example_binaries
+          done
+
+      - name: Upload example binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: example_binaries-${{ github.run_id }}
+          path: artifacts/example_binaries
+
+  test-examples:
+    name: Test Examples
+    runs-on: ubuntu-22.04
+    needs: build-examples
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get -qqy update
+          sudo apt-get install -qqy libsystemc libsystemc-dev
+
+      - name: Download example binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: example_binaries-${{ github.run_id }}
+          path: artifacts/example_binaries
+
+      - name: Download and build Renode
+        uses: antmicro/renode-test-action@v4
+        with:
+          renode-repository: ${{ inputs.renode_gitrepo || 'https://github.com/renode/renode' }}
+          renode-revision: ${{ inputs.renode_gitrev || 'master' }}
+
+      - name: Run tests
+        run: |
+          for i in artifacts/example_binaries/*; do
+            mkdir -p examples/"$(basename "$i")"/bin
+            chmod +x "$i"
+            cp $i examples/"$(basename "$i")"/bin
+          done
+          pushd examples
+          renode-test -t all_examples.yaml
+          popd
