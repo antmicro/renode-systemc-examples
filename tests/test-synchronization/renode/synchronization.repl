@@ -1,0 +1,6 @@
+test: Test.ExecuteInLockPeripheral @ sysbus 0x1000000
+
+writer_systemc: SystemC.SystemCPeripheral @ sysbus <0x9000000, +0xffffff>
+    address: "127.0.0.1"
+    port: 4242
+    timeSyncPeriodUS: 5000

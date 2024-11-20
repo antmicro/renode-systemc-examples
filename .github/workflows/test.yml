@@ -110,6 +110,10 @@ jobs:
           for i in examples/*/; do
             cp "$i"/bin/* artifacts/example_binaries
           done
+          mkdir -p artifacts/test_binaries
+          for i in tests/*/; do
+            cp "$i"/bin/* artifacts/test_binaries
+          done
 
       - name: Upload example binaries
         uses: actions/upload-artifact@v4
@@ -150,4 +154,12 @@ jobs:
           done
           pushd examples
           renode-test -t all_examples.yaml
+          popd
+          for i in artifacts/test_binaries/*; do
+            mkdir -p tests/"$(basename "$i")"/bin
+            chmod +x "$i"
+            cp $i tests/"$(basename "$i")"/bin
+          done
+          pushd tests
+          renode-test -t all_tests.yaml
           popd

@@ -53,9 +53,14 @@ build_examples:
     - make CPPSTD=c++14 -j8
     - popd
     - mkdir -p artifacts/example_binaries
-    - for i in examples/*/; 
+    - mkdir -p artifacts/test_binaries
+    - for i in examples/*/;
       do 
-        cp $i/bin/* artifacts/example_binaries; 
+        cp $i/bin/* artifacts/example_binaries;
+      done
+    - for i in tests/*/;
+      do 
+        cp $i/bin/* artifacts/test_binaries;
       done
   artifacts:
     paths:
@@ -77,4 +82,12 @@ test_examples:
       done
     - pushd examples
     - renode-test -t all_examples.yaml
+    - popd
+    - for i in artifacts/test_binaries/*;
+      do
+        mkdir -p tests/`basename $i`/bin;
+        cp $i tests/`basename $i`/bin;
+      done
+    - pushd tests
+    - renode-test -t all_tests.yaml
     - popd

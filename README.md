@@ -77,6 +77,10 @@ my_example
 └── my_example.robot         Robot Framework file with test logic
 ```
 
+### `tests` directory
+
+Contains tests for specific scenarios, including regression tests. They are not very illustrative and less interesting to users looking for reference. Other than that, the structure is identical to that of `examples`.
+
 ## Running the examples
 
 To run `my_example` from the repository root, use:
