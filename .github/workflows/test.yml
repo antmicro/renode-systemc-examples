@@ -121,6 +121,12 @@ jobs:
           name: example_binaries-${{ github.run_id }}
           path: artifacts/example_binaries
 
+      - name: Upload test binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: test_binaries-${{ github.run_id }}
+          path: artifacts/test_binaries
+
   test-examples:
     name: Test Examples
     runs-on: ubuntu-22.04
@@ -138,6 +144,12 @@ jobs:
         with:
           name: example_binaries-${{ github.run_id }}
           path: artifacts/example_binaries
+
+      - name: Download test binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: test_binaries-${{ github.run_id }}
+          path: artifacts/test_binaries
 
       - name: Download and build Renode
         uses: antmicro/renode-test-action@v4

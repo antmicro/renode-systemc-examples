@@ -1,3 +1,4 @@
 renode-bridge/bin/
 examples/*/bin/
+tests/*/bin/
 build

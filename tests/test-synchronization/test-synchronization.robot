@@ -1,5 +1,5 @@
 *** Variables ***
-${SCRIPT_PATH}                      ${CURDIR}/renode/synchronization.resc
+${SCRIPT_PATH}                      ${CURDIR}/renode/test-synchronization.resc
 
 *** Test Cases ***
 Should Not Deadlock Writing To ExecuteInLockPeripheral
