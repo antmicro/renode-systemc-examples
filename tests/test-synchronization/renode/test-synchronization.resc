@@ -1,0 +1,10 @@
+using sysbus
+mach create "test-synchronization"
+
+include $ORIGIN/ExecuteInLockPeripheral.cs
+machine LoadPlatformDescription $ORIGIN/test-synchronization.repl
+
+sysbus LogPeripheralAccess writer_systemc true
+sysbus LogPeripheralAccess test true
+sysbus.writer_systemc SystemCExecutablePath $ORIGIN/../bin/test-synchronization
+
