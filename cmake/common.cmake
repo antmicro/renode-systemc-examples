@@ -35,9 +35,29 @@ if(NOT SYSCMODULE_DIR)
   set(SYSCMODULE_DIR ${SYSCMODULE_DIR} CACHE INTERNAL "")
 endif()
 
-find_library(SYSTEMC_LIB
-    NAMES systemc libsystemc
-)
+if(NOT USER_SYSTEMC_LIB_DIR)
+    message(WARNING "No USER_SYSTEMC_LIB_DIR specified - attempting to use system-wide SystemC installation.")
+    find_library(SYSTEMC_LIB
+        NAMES systemc libsystemc
+    )
+else()
+    message(STATUS "Looking for SystemC library in ${USER_SYSTEMC_LIB_DIR}")
+    find_library(SYSTEMC_LIB
+        PATHS ${USER_SYSTEMC_LIB_DIR}
+        NAMES systemc libsystemc
+    )
+endif()
+
+if(NOT USER_SYSTEMC_INCLUDE_DIR)
+    message(WARNING "No USER_SYSTEMC_INCLUDE_DIR specified - headers will only be included from standard locations.")
+else()
+    message(STATUS "Looking for SystemC headers in ${USER_SYSTEMC_INCLUDE_DIR}")
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${USER_SYSTEMC_INCLUDE_DIR})
+endif()
+
+if(NOT SYSTEMC_LIB)
+    message(FATAL_ERROR "Couldn't find SystemC distribution.")
+endif()
 message(STATUS "Found SystemC: ${SYSTEMC_LIB}")
 
 if (NOT TARGET renode_bridge)
