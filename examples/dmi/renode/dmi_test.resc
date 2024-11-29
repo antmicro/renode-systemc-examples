@@ -1,0 +1,8 @@
+using sysbus
+mach create "dmi_test"
+
+machine LoadPlatformDescription $ORIGIN/dmi_test.repl
+
+sysbus LogPeripheralAccess dmi_test true
+sysbus LogPeripheralAccess memory true
+sysbus.dmi_test SystemCExecutablePath $ORIGIN/../bin/dmi
