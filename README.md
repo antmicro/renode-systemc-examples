@@ -36,6 +36,12 @@ When run from the repository root, the above commands will build all the example
 Individual examples are built by running the above in the directory for
 a particular example (e.g. `examples/lt`).
 
+### Custom SystemC builds
+
+To compile the examples with custom SystemC builds, use `-DUSER_SYSTEMC_LIB_DIR` to specify
+the directory with SystemC binaries and `-DUSER_SYSTEMC_INCLUDE_DIR` to provide the path to headers.
+If these are missing, the build script will attempt to use a system-wide SystemC installation.
+
 ### SystemC distribution and C++ standard version
 
 SystemC libraries are compiled against a particular version of the C++
