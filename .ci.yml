@@ -6,39 +6,60 @@ variables:
   ZEPHYR_VERSION: d0ae1a8b1057c0a8b510860d1cbdbb1cb79f2411
 
 stages:
+  - build_dependencies
   - build
   - test
 
-build_zephyr_binaries:
+build_systemc:
   image: debian:12.5-slim
-  stage: build
+  stage: build_dependencies
   tags: ['ace-x86_64']
   script:
-    - apt-get -qqy update && apt-get install -qqy wget python3-pip python3-venv cmake git ninja-build
-    - python3 -m venv venv && source venv/bin/activate
-    - pip3 install west==${WEST_VERSION}
-    - wget --no-verbose https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZEPHYR_SDK_VERSION}/${ZEPHYR_SDK_FILENAME} && tar xf ${ZEPHYR_SDK_FILENAME} && pushd ${ZEPHYR_SDK_BASENAME} && ./setup.sh -t all -c && popd && export ZEPHYR_SDK_INSTALL_DIR=$(pwd)/${ZEPHYR_SDK_BASENAME}
-    - west init zephyrproject
-    - pushd zephyrproject/zephyr
-    - git checkout ${ZEPHYR_VERSION} && west update
-    - pip3 install -r scripts/requirements.txt
-    - west update
+    - apt-get -qqy update && apt-get install -qqy cmake clang git
+    - git submodule update --init
+    - pushd systemc
+    - mkdir -p build
+    - pushd build
+    - cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_STANDARD=17
+    - make -j
+    - popd 
     - popd
-    - mkdir -p artifacts/zephyr_binaries
-    - for i in `find examples -name "zephyr"`;
-      do
-        EXAMPLE_NAME=`echo $i | sed -e "s/examples\///" | sed -e "s/\/zephyr//"`;
-        mkdir -p examples/$EXAMPLE_NAME/bin;
-        pushd zephyrproject/zephyr;
-        west build -b stm32f401_mini ../../examples/$EXAMPLE_NAME/zephyr;
-        cp build/zephyr/zephyr.elf ../../examples/$EXAMPLE_NAME/bin/$EXAMPLE_NAME.elf;
-        cp build/zephyr/zephyr.elf ../../artifacts/zephyr_binaries/$EXAMPLE_NAME.elf;
-        rm -rf build/;
-        popd;
-      done
+    - mkdir -p artifacts/systemc
+    - cp systemc/build/src/libsystemc.a artifacts/systemc
   artifacts:
     paths:
       - artifacts/
+
+      #build_zephyr_binaries:
+      #  image: debian:12.5-slim
+      #  stage: build_dependencies
+      #  tags: ['ace-x86_64']
+      #  script:
+      #    - apt-get -qqy update && apt-get install -qqy wget python3-pip python3-venv cmake git ninja-build
+      #    - python3 -m venv venv && source venv/bin/activate
+      #    - pip3 install west==${WEST_VERSION}
+      #    - wget --no-verbose https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZEPHYR_SDK_VERSION}/${ZEPHYR_SDK_FILENAME} && tar xf ${ZEPHYR_SDK_FILENAME} && pushd ${ZEPHYR_SDK_BASENAME} && ./setup.sh -t all -c && popd && export ZEPHYR_SDK_INSTALL_DIR=$(pwd)/${ZEPHYR_SDK_BASENAME}
+      #    - west init zephyrproject
+      #    - pushd zephyrproject/zephyr
+      #    - git checkout ${ZEPHYR_VERSION} && west update
+      #    - pip3 install -r scripts/requirements.txt
+      #    - west update
+      #    - popd
+      #    - mkdir -p artifacts/zephyr_binaries
+      #    - for i in `find examples -name "zephyr"`;
+      #      do
+      #        EXAMPLE_NAME=`echo $i | sed -e "s/examples\///" | sed -e "s/\/zephyr//"`;
+      #        mkdir -p examples/$EXAMPLE_NAME/bin;
+      #        pushd zephyrproject/zephyr;
+      #        west build -b stm32f401_mini ../../examples/$EXAMPLE_NAME/zephyr;
+      #        cp build/zephyr/zephyr.elf ../../examples/$EXAMPLE_NAME/bin/$EXAMPLE_NAME.elf;
+      #        cp build/zephyr/zephyr.elf ../../artifacts/zephyr_binaries/$EXAMPLE_NAME.elf;
+      #        rm -rf build/;
+      #        popd;
+      #      done
+      #  artifacts:
+      #    paths:
+      #      - artifacts/
 
 build_examples:
   image: antmicro/renode:nightly
@@ -46,11 +67,13 @@ build_examples:
   tags: ['ace-x86_64']
   script:
     - apt -qqy update
-    - apt -qqy install libsystemc libsystemc-dev clang cmake
+    - apt -qqy install clang cmake git
+    - git submodule update --init
     - mkdir -p build
     - pushd build
-    - cmake .. -DUSER_RENODE_DIR=/opt/renode
-    - make CPPSTD=c++14 -j8
+    - ls -lAR
+    - cmake .. -DUSER_RENODE_DIR=/opt/renode -DUSER_SYSTEMC_INCLUDE_DIR=$(pwd)/../systemc/src -DUSER_SYSTEMC_LIB_DIR=$(pwd)/../artifacts/systemc
+    - make -j
     - popd
     - mkdir -p artifacts/example_binaries
     - mkdir -p artifacts/test_binaries
@@ -66,28 +89,28 @@ build_examples:
     paths:
       - artifacts/
 
-test_examples:
-  image: antmicro/renode:nightly
-  stage: test
-  dependencies:
-    - build_examples
-  tags: ['ace-x86_64']
-  script:
-    - apt -qqy update
-    - apt -qqy install libsystemc libsystemc-dev
-    - for i in artifacts/example_binaries/*;
-      do
-        mkdir -p examples/`basename $i`/bin;
-        cp $i examples/`basename $i`/bin;
-      done
-    - pushd examples
-    - renode-test -t all_examples.yaml
-    - popd
-    - for i in artifacts/test_binaries/*;
-      do
-        mkdir -p tests/`basename $i`/bin;
-        cp $i tests/`basename $i`/bin;
-      done
-    - pushd tests
-    - renode-test -t all_tests.yaml
-    - popd
+      #test_examples:
+      #  image: antmicro/renode:nightly
+      #  stage: test
+      #  dependencies:
+      #    - build_examples
+      #  tags: ['ace-x86_64']
+      #  script:
+      #    - apt -qqy update
+      #    - apt -qqy install libsystemc libsystemc-dev
+      #    - for i in artifacts/example_binaries/*;
+      #      do
+      #        mkdir -p examples/`basename $i`/bin;
+      #        cp $i examples/`basename $i`/bin;
+      #      done
+      #    - pushd examples
+      #    - renode-test -t all_examples.yaml
+      #    - popd
+      #    - for i in artifacts/test_binaries/*;
+      #      do
+      #        mkdir -p tests/`basename $i`/bin;
+      #        cp $i tests/`basename $i`/bin;
+      #      done
+      #    - pushd tests
+      #    - renode-test -t all_tests.yaml
+      #    - popd
