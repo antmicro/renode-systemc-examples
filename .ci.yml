@@ -6,12 +6,33 @@ variables:
   ZEPHYR_VERSION: d0ae1a8b1057c0a8b510860d1cbdbb1cb79f2411
 
 stages:
+  - build_dependencies
   - build
   - test
 
+build_systemc:
+  image: antmicro/renode:nightly
+  stage: build_dependencies
+  tags: ['ace-x86_64']
+  script:
+    - apt-get -qqy update && apt-get install -qqy cmake clang git
+    - git submodule update --init
+    - pushd systemc
+    - mkdir -p build
+    - pushd build
+    - cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_STANDARD=14
+    - make -j
+    - popd 
+    - popd
+    - mkdir -p artifacts/systemc
+    - cp systemc/build/src/libsystemc.a artifacts/systemc
+  artifacts:
+    paths:
+      - artifacts/
+
 build_zephyr_binaries:
   image: debian:12.5-slim
-  stage: build
+  stage: build_dependencies
   tags: ['ace-x86_64']
   script:
     - apt-get -qqy update && apt-get install -qqy wget python3-pip python3-venv cmake git ninja-build
@@ -27,7 +48,7 @@ build_zephyr_binaries:
     - mkdir -p artifacts/zephyr_binaries
     - for i in `find examples -name "zephyr"`;
       do
-        EXAMPLE_NAME=`echo $i | sed -e "s/examples\///" | sed -e "s/\/zephyr//"`;
+        EXAMPLE_NAME="$(echo $i | sed -e "s/examples\///" -e "s/\/zephyr//")";
         mkdir -p examples/$EXAMPLE_NAME/bin;
         pushd zephyrproject/zephyr;
         west build -b stm32f401_mini ../../examples/$EXAMPLE_NAME/zephyr;
@@ -46,21 +67,24 @@ build_examples:
   tags: ['ace-x86_64']
   script:
     - apt -qqy update
-    - apt -qqy install libsystemc libsystemc-dev clang cmake
+    - apt -qqy install clang cmake git
+    - git submodule update --init
     - mkdir -p build
     - pushd build
-    - cmake .. -DUSER_RENODE_DIR=/opt/renode
-    - make CPPSTD=c++14 -j8
+    - cmake .. -DUSER_RENODE_DIR=/opt/renode -DUSER_SYSTEMC_INCLUDE_DIR=$(pwd)/../systemc/src -DUSER_SYSTEMC_LIB_DIR=$(pwd)/../artifacts/systemc -DCMAKE_CXX_STANDARD=14
+    - make -j
     - popd
     - mkdir -p artifacts/example_binaries
     - mkdir -p artifacts/test_binaries
     - for i in examples/*/;
       do 
-        cp $i/bin/* artifacts/example_binaries;
+        EXAMPLE_NAME="$(basename $i)";
+        cp examples/$EXAMPLE_NAME/bin/$EXAMPLE_NAME artifacts/example_binaries/x64-systemc--$EXAMPLE_NAME.elf;
       done
     - for i in tests/*/;
       do 
-        cp $i/bin/* artifacts/test_binaries;
+        TEST_NAME="$(basename $i)";
+        cp tests/$TEST_NAME/bin/$TEST_NAME artifacts/test_binaries/x64-systemc--$TEST_NAME.elf;
       done
   artifacts:
     paths:
@@ -77,16 +101,18 @@ test_examples:
     - apt -qqy install libsystemc libsystemc-dev
     - for i in artifacts/example_binaries/*;
       do
-        mkdir -p examples/`basename $i`/bin;
-        cp $i examples/`basename $i`/bin;
+        EXAMPLE_NAME="$(basename $i | sed -e 's/x64-systemc--//' -e 's/.elf//')";
+        mkdir -p examples/$EXAMPLE_NAME/bin;
+        cp $i examples/$EXAMPLE_NAME/bin/$EXAMPLE_NAME;
       done
     - pushd examples
     - renode-test -t all_examples.yaml
     - popd
     - for i in artifacts/test_binaries/*;
       do
-        mkdir -p tests/`basename $i`/bin;
-        cp $i tests/`basename $i`/bin;
+        TEST_NAME="$(basename $i | sed -e 's/x64-systemc--//' -e 's/.elf//')";
+        mkdir -p tests/$TEST_NAME/bin;
+        cp $i tests/$TEST_NAME/bin/$TEST_NAME;
       done
     - pushd tests
     - renode-test -t all_tests.yaml
