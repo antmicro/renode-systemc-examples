@@ -205,7 +205,7 @@ jobs:
           pushd build
           cmake .. -DCMAKE_CXX_STANDARD=14 \
                    -DUSER_SYSTEMC_INCLUDE_DIR=$(pwd)/../systemc/src \
-                   -DUSER_SYSTEMC_LIB_DIR=$(pwd)/../artifacts/systemc_windows \
+                   -DUSER_SYSTEMC_LIB_DIR=$(pwd)/../artifacts/systemc_linux \
           make -j8
           popd
           mkdir -p artifacts/linux_example_binaries
