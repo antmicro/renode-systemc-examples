@@ -6,7 +6,8 @@
 #include <stdio.h>
 
 SC_HAS_PROCESS(dmi_test);
-dmi_test::dmi_test(sc_core::sc_module_name name) {
+dmi_test::dmi_test(sc_core::sc_module_name name, renode_bridge &renode_bridge)
+    : m_renode_bridge(renode_bridge) {
   SC_THREAD(dmi_test_sequence);
 
   payload.reset(new tlm::tlm_generic_payload());
@@ -98,6 +99,12 @@ void dmi_test::dmi_test_sequence() {
     std::memcpy(dmi_data.get_dmi_ptr() +
                     (test_address - dmi_data.get_start_address()),
                 &write_data_word, 4);
+
+    // For example's sake we're assuming the memory we've written to through
+    // DMI contains code. In this case we need to invalidate translation
+    // blocks in Renode to avoid unexpected behavior.
+    m_renode_bridge.invalidate_translation_blocks(test_address,
+                                                  test_address + 4);
 
     // read back value using b_transport
     reset_payload(*payload);
