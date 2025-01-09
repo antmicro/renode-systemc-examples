@@ -94,7 +94,7 @@ jobs:
           sudo apt-get install -qqy libsystemc libsystemc-dev clang cmake
 
       - name: Download and build Renode
-        uses: antmicro/renode-test-action@0378db85fc4ebfbe1db510d7b85747a71aa0d7bc
+        uses: antmicro/renode-test-action@cf7f25fbcfaf1a0c1f9f32c16b1f3322f7f3bb5d
         with:
           renode-repository: ${{ inputs.renode_gitrepo || 'https://github.com/renode/renode' }}
           renode-revision: ${{ inputs.renode_gitrev || 'master' }}
@@ -152,7 +152,7 @@ jobs:
           path: artifacts/test_binaries
 
       - name: Download and build Renode
-        uses: antmicro/renode-test-action@0378db85fc4ebfbe1db510d7b85747a71aa0d7bc
+        uses: antmicro/renode-test-action@cf7f25fbcfaf1a0c1f9f32c16b1f3322f7f3bb5d
         with:
           renode-repository: ${{ inputs.renode_gitrepo || 'https://github.com/renode/renode' }}
           renode-revision: ${{ inputs.renode_gitrev || 'master' }}
