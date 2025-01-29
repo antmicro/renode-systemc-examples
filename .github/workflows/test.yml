@@ -82,8 +82,50 @@ jobs:
           name: zephyr_binaries-${{ env.ZEPHYR_VERSION }}-${{ github.run_id }}
           path: artifacts/zephyr_binaries
 
-  build-examples:
-    name: Build Examples
+  build-systemc:
+    name: Build SystemC
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get -qqy update
+          sudo apt-get -qqy upgrade && sudo apt-get install -qqy cmake clang git make autoconf mingw-w64
+
+      - name: Fetch SystemC repo
+        run: |
+          git submodule update --init
+
+      - name: Build SystemC For Windows
+        run: |
+          mkdir -p artifacts/systemc_windows
+          pushd systemc
+          sed -i 's/#  include <Windows\.h>/#include <windows.h>/g' src/sysc/kernel/sc_cmnhdr.h
+          mkdir -p build
+          pushd build
+          cmake .. -DCMAKE_SYSTEM_NAME=Windows \
+                   -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc-posix \
+                   -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++-posix \
+                   -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \
+                   -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY \
+                   -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
+                   -DMSVC=true \
+                   -DCMAKE_THREAD_LIBS_INIT="-lpthread" \
+                   -DCMAKE_INSTALL_PREFIX=$(pwd)/../install
+          make CPPSTD=c++14 -j8
+          cp src/libsystemc.a ../../artifacts/systemc_windows/
+          popd
+          popd
+
+      - name: Upload systemC for Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: systemc_windows-${{ github.run_id }}
+          path: artifacts/systemc_windows
+
+  build-examples-linux:
+    name: Build Examples Linux
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -99,57 +141,67 @@ jobs:
           renode-repository: ${{ inputs.renode_gitrepo || 'https://github.com/renode/renode' }}
           renode-revision: ${{ inputs.renode_gitrev || 'master' }}
 
-      - name: Build examples
+      - name: Build linux examples
         run: |
+          mkdir -p artifacts/linux_example_binaries
+          mkdir -p artifacts/linux_test_binaries
           mkdir -p build
           pushd build
           cmake ..
           make CPPSTD=c++14 -j8
           popd
-          mkdir -p artifacts/example_binaries
           for i in examples/*/; do
-            cp "$i"/bin/* artifacts/example_binaries
+            cp "$i"/bin/* artifacts/linux_example_binaries
+            rm -rf "$i"/bin
           done
-          mkdir -p artifacts/test_binaries
           for i in tests/*/; do
-            cp "$i"/bin/* artifacts/test_binaries
+            cp "$i"/bin/* artifacts/linux_test_binaries
+            rm -rf "$i"/bin
           done
+          rm -rf build
 
-      - name: Upload example binaries
+      - name: Upload linux example binaries
         uses: actions/upload-artifact@v4
         with:
-          name: example_binaries-${{ github.run_id }}
-          path: artifacts/example_binaries
+          name: linux_example_binaries-${{ github.run_id }}
+          path: artifacts/linux_example_binaries
 
-      - name: Upload test binaries
+      - name: Upload linux test binaries
         uses: actions/upload-artifact@v4
         with:
-          name: test_binaries-${{ github.run_id }}
-          path: artifacts/test_binaries
+          name: linux_test_binaries-${{ github.run_id }}
+          path: artifacts/linux_test_binaries
 
-  test-examples:
-    name: Test Examples
-    runs-on: ubuntu-22.04
-    needs: build-examples
+  build-examples-windows:
+    name: Build Examples Windows
+    needs: build-systemc
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            git
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-make
+            patch
+
+      - name: Fetch SystemC repo
         run: |
-          sudo apt-get -qqy update
-          sudo apt-get install -qqy libsystemc libsystemc-dev
+          git submodule update --init
 
-      - name: Download example binaries
+      - name: Download systemC built for Windows
         uses: actions/download-artifact@v4
         with:
-          name: example_binaries-${{ github.run_id }}
-          path: artifacts/example_binaries
-
-      - name: Download test binaries
-        uses: actions/download-artifact@v4
-        with:
-          name: test_binaries-${{ github.run_id }}
-          path: artifacts/test_binaries
+          name: systemc_windows-${{ github.run_id }}
+          path: artifacts/systemc_windows
 
       - name: Download and build Renode
         uses: antmicro/renode-test-action@v4
@@ -157,21 +209,52 @@ jobs:
           renode-repository: ${{ inputs.renode_gitrepo || 'https://github.com/renode/renode' }}
           renode-revision: ${{ inputs.renode_gitrev || 'master' }}
 
-      - name: Run tests
+      - name: Build Windows examples
+        shell: bash
         run: |
-          for i in artifacts/example_binaries/*; do
-            mkdir -p examples/"$(basename "$i")"/bin
-            chmod +x "$i"
-            cp $i examples/"$(basename "$i")"/bin
-          done
-          pushd examples
-          renode-test -t all_examples.yaml
+          mkdir -p artifacts/windows_example_binaries
+          mkdir -p artifacts/windows_test_binaries
+          mkdir -p build
+          pushd build
+          cmake .. -G "Unix Makefiles" -DUSER_SYSTEMC_INCLUDE_DIR=$(pwd)/../systemc/src \
+                                       -DUSER_SYSTEMC_LIB_DIR=$(pwd)/../artifacts/systemc_windows \
+                                       -DCMAKE_CXX_FLAGS="-DWIN32_LEAN_AND_MEAN"
+          make CPPSTD=c++14 -j8
           popd
-          for i in artifacts/test_binaries/*; do
-            mkdir -p tests/"$(basename "$i")"/bin
-            chmod +x "$i"
-            cp $i tests/"$(basename "$i")"/bin
+          for i in examples/*/; do
+            cp "$i"/bin/* artifacts/windows_example_binaries
+            rm -rf "$i"/bin
           done
-          pushd tests
-          renode-test -t all_tests.yaml
-          popd
+          for i in tests/*/; do
+            cp "$i"/bin/* artifacts/windows_test_binaries
+            rm -rf "$i"/bin
+          done
+          rm -rf build
+
+      - name: Upload Windows example binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows_example_binaries-${{ github.run_id }}
+          path: artifacts/windows_example_binaries
+
+      - name: Upload Windows test binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows_test_binaries-${{ github.run_id }}
+          path: artifacts/windows_test_binaries
+
+  test-examples-linux:
+    uses: ./.github/workflows/test-examples.yml
+    needs: build-examples-linux
+    with:
+      runner: ubuntu-20.04
+      example_binaries: linux_example_binaries
+      test_binaries: linux_example_binaries
+
+  test-examples-windows:
+    uses: ./.github/workflows/test-examples.yml
+    needs: build-examples-windows
+    with:
+      runner: windows-latest
+      example_binaries: windows_example_binaries
+      test_binaries: windows_example_binaries

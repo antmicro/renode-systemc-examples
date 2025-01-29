@@ -1,0 +1,63 @@
+name: Test Examples
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        required: true
+        type: string
+      example_binaries:
+        required: true
+        type: string
+      test_binaries:
+        required: true
+        type: string
+
+jobs:
+  test-examples:
+    name: Test Examples
+    runs-on: ${{ inputs.runner }}
+
+    defaults:
+      run:
+        shell: ${{ inputs.runner == 'windows-latest' && 'msys2 {0}' || 'bash' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download example binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.example_binaries }}-${{ github.run_id }}
+          path: artifacts/example_binaries
+
+      - name: Download test binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.test_binaries }}-${{ github.run_id }}
+          path: artifacts/test_binaries
+
+      - name: Download and build Renode
+        uses: antmicro/renode-test-action@v4
+        with:
+          renode-repository: ${{ inputs.renode_gitrepo || 'https://github.com/renode/renode' }}
+          renode-revision: ${{ inputs.renode_gitrev || 'master' }}
+
+      - name: Run tests
+        run: |
+          for i in artifacts/example_binaries/*; do
+            mkdir -p examples/"$(basename "$i")"/bin
+            chmod +x "$i"
+            cp $i examples/"$(basename "$i")"/bin
+          done
+          pushd examples
+          renode-test -t all_examples.yaml
+          popd
+          for i in artifacts/test_binaries/*; do
+            mkdir -p tests/"$(basename "$i")"/bin
+            chmod +x "$i"
+            cp $i tests/"$(basename "$i")"/bin
+          done
+          pushd tests
+          renode-test -t all_tests.yaml
+          popd
