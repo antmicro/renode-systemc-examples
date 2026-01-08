@@ -1,0 +1,12 @@
+using sysbus
+$name?="stm32f401_mini"
+mach create $name
+
+$bin?=@https://dl.antmicro.com/projects/renode/systemc-examples-zephyr-timesync-stm32f401_mini.elf-s_572300-47d39e100e80a377221a84f8aa0452b87a3384ab
+
+machine LoadPlatformDescription $ORIGIN/timesync.repl
+
+showAnalyzer usart1 Antmicro.Renode.Analyzers.LoggingUartAnalyzer
+
+sysbus LoadELF $bin
+sysbus LogPeripheralAccess systemc true
