@@ -13,7 +13,6 @@ stages:
 build_systemc:
   image: antmicro/renode:nightly
   stage: build_dependencies
-  tags: ['ace-x86_64']
   script:
     - apt-get -qqy update && apt-get install -qqy cmake clang git
     - git submodule update --init
@@ -33,7 +32,6 @@ build_systemc:
 build_zephyr_binaries:
   image: debian:12.5-slim
   stage: build_dependencies
-  tags: ['ace-x86_64']
   script:
     - apt-get -qqy update && apt-get install -qqy wget python3-pip python3-venv cmake git ninja-build
     - python3 -m venv venv && source venv/bin/activate
@@ -64,7 +62,6 @@ build_zephyr_binaries:
 build_examples:
   image: antmicro/renode:nightly
   stage: build
-  tags: ['ace-x86_64']
   script:
     - apt -qqy update
     - apt -qqy install clang cmake git
@@ -95,7 +92,6 @@ test_examples:
   stage: test
   dependencies:
     - build_examples
-  tags: ['ace-x86_64']
   script:
     - apt -qqy update
     - apt -qqy install libsystemc libsystemc-dev
