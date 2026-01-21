@@ -13,73 +13,46 @@ on:
         required: false
 
 env:
-  WEST_VERSION: 1.2.0
-  ZEPHYR_SDK_VERSION: 0.16.5-1
-  ZEPHYR_SDK_BASENAME: zephyr-sdk-${ZEPHYR_SDK_VERSION}
-  ZEPHYR_SDK_FILENAME: zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-x86_64.tar.xz
-  ZEPHYR_VERSION: d0ae1a8b1057c0a8b510860d1cbdbb1cb79f2411
+  DEBIAN_FRONTEND: noninteractive
+  CMAKE_PREFIX_PATH: /opt/toolchains
 
 jobs:
   build-zephyr-binaries:
     name: Build Zephyr Binaries
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: |
           sudo apt-get -qqy update
-          sudo apt-get install -qqy wget python3-pip python3-venv cmake git ninja-build
+          sudo apt-get install -qqy cmake ninja-build
+      
+      - name: Setup Zephyr project
+        uses: zephyrproject-rtos/action-zephyr-setup@v1
+        with:
+          app-path: .
+          toolchains: arm-zephyr-eabi
 
-      - name: Set up Python virtual environment
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          echo "PATH=$PATH" >> "$GITHUB_ENV"
-          pip3 install west=="$WEST_VERSION"
-
-      - name: Set up Zephyr SDK
-        run: |
-          wget --no-verbose https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${{ env.ZEPHYR_SDK_VERSION }}/${{ env.ZEPHYR_SDK_FILENAME }}
-          tar xf ${{ env.ZEPHYR_SDK_FILENAME }}
-          pushd ${{ env.ZEPHYR_SDK_BASENAME }}
-          ./setup.sh -t all -c
-          popd
-          echo "ZEPHYR_SDK_INSTALL_DIR=$(pwd)/${{ env.ZEPHYR_SDK_BASENAME }}" >> $GITHUB_ENV
-
-      - name: Get Zephyr source
-        run: |
-          west init zephyrproject
-          pushd zephyrproject/zephyr
-          git checkout ${{ env.ZEPHYR_VERSION }}
-          west update
-          echo "ZEPHYR_BASE=$PWD" >> "$GITHUB_ENV"
-          pip3 install -r scripts/requirements.txt
-          popd
-
-      - name: Build Zephyr examples
+      - name: Build Zephyr
         run: |
           mkdir -p artifacts/zephyr_binaries
-          for i in `find examples -name "zephyr"`; do
-            EXAMPLE_NAME=`echo $i | sed -e "s/examples\///" | sed -e "s/\/zephyr//"`
-            mkdir -p examples/$EXAMPLE_NAME/bin
-            pushd zephyrproject/zephyr
-            west build -b stm32f401_mini ../../examples/$EXAMPLE_NAME/zephyr
-            cp build/zephyr/zephyr.elf ../../examples/$EXAMPLE_NAME/bin/$EXAMPLE_NAME.elf
-            cp build/zephyr/zephyr.elf ../../artifacts/zephyr_binaries/$EXAMPLE_NAME.elf
-            rm -rf build/
-            popd
+          for example in examples/*/zephyr; do
+            example_name=$(echo $example | cut -f 2 -d '/')
+            west build -p -b stm32f401_mini $example
+            cp build/zephyr/zephyr.elf artifacts/zephyr_binaries/$example_name.elf
           done
 
       - name: Upload Zephyr binaries
         uses: actions/upload-artifact@v4
         with:
-          name: zephyr_binaries-${{ env.ZEPHYR_VERSION }}-${{ github.run_id }}
+          name: zephyr_binaries-${{ github.run_id }}
           path: artifacts/zephyr_binaries
 
   build-examples:
@@ -103,25 +76,27 @@ jobs:
         run: |
           mkdir -p build
           pushd build
-          cmake ..
-          make CPPSTD=c++14 -j8
+            cmake ..
+            make CPPSTD=c++14 -j $(nproc)
           popd
-          mkdir -p artifacts/example_binaries
-          for i in examples/*/; do
-            cp "$i"/bin/* artifacts/example_binaries
-          done
-          mkdir -p artifacts/test_binaries
-          for i in tests/*/; do
-            cp "$i"/bin/* artifacts/test_binaries
-          done
 
-      - name: Upload example binaries
+          mkdir -p artifacts/example_binaries artifacts/test_binaries
+          for example in examples/*/; do
+            example_name="$(basename $example)"
+            cp examples/$example_name/bin/$example_name artifacts/example_binaries/x64-systemc--$example_name.elf
+          done
+          for test in tests/*/; do
+            test_name="$(basename $test)"
+            cp tests/$test_name/bin/$test_name artifacts/test_binaries/x64-systemc--$test_name.elf
+          done
+        
+      - name: Upload Example Binaries
         uses: actions/upload-artifact@v4
         with:
           name: example_binaries-${{ github.run_id }}
           path: artifacts/example_binaries
 
-      - name: Upload test binaries
+      - name: Upload Test Binaries
         uses: actions/upload-artifact@v4
         with:
           name: test_binaries-${{ github.run_id }}
@@ -159,19 +134,22 @@ jobs:
 
       - name: Run tests
         run: |
-          for i in artifacts/example_binaries/*; do
-            mkdir -p examples/"$(basename "$i")"/bin
-            chmod +x "$i"
-            cp $i examples/"$(basename "$i")"/bin
+          for example in artifacts/example_binaries/*; do
+            example_name="$(basename $example | sed -e 's/x64-systemc--//' -e 's/.elf//')"
+            mkdir -p examples/$example_name/bin
+            cp $example examples/$example_name/bin/$example_name
           done
+
+          for test in artifacts/test_binaries/*; do
+            test_name="$(basename $test | sed -e 's/x64-systemc--//' -e 's/.elf//')"
+            mkdir -p tests/$test_name/bin
+            cp $test tests/$test_name/bin/$test_name
+          done
+
           pushd examples
-          renode-test -t all_examples.yaml
+            renode-test -t all_examples.yaml
           popd
-          for i in artifacts/test_binaries/*; do
-            mkdir -p tests/"$(basename "$i")"/bin
-            chmod +x "$i"
-            cp $i tests/"$(basename "$i")"/bin
-          done
+
           pushd tests
-          renode-test -t all_tests.yaml
+            renode-test -t all_tests.yaml
           popd
