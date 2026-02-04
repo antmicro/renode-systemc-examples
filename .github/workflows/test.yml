@@ -19,7 +19,12 @@ env:
 jobs:
   build-zephyr-binaries:
     name: Build Zephyr Binaries
-    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        os:
+          - ubuntu-22.04
+          - windows-2025
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,9 +35,18 @@ jobs:
           python-version: '3.12'
 
       - name: Install Dependencies
+        shell: bash
         run: |
-          sudo apt-get -qqy update
-          sudo apt-get install -qqy cmake ninja-build
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            sudo apt-get -qqy update
+            sudo apt-get install -qqy cmake ninja-build
+          elif [ "${{ runner.os }}" = "Windows" ]; then
+            choco feature enable -n allowGlobalConfirmation
+            choco install ninja cmake
+          else
+            echo "Unknown runner!"
+            exit 1
+          fi
       
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
@@ -41,6 +55,7 @@ jobs:
           toolchains: arm-zephyr-eabi
 
       - name: Build Zephyr
+        shell: bash
         run: |
           mkdir -p artifacts/zephyr_binaries
           for example in examples/*/zephyr; do
@@ -52,96 +67,193 @@ jobs:
       - name: Upload Zephyr binaries
         uses: actions/upload-artifact@v4
         with:
-          name: zephyr_binaries-${{ github.run_id }}
+          name: zephyr_binaries-${{ runner.os }}-${{ github.run_id }}
           path: artifacts/zephyr_binaries
+
+  build-systemc:
+    name: Build SystemC
+    strategy:
+      matrix:
+        os:
+          - ubuntu-22.04
+          - windows-2025
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            sudo apt-get -qqy update
+            sudo apt-get install -qqy cmake
+          elif [ "${{ runner.os }}" = "Windows" ]; then
+            choco feature enable -n allowGlobalConfirmation
+            choco install cmake
+          else
+            echo "Unknown runner!"
+            exit 1
+          fi
+
+      - name: Set CMake generator
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          export CMAKE_GENERATOR="Visual Studio 17 2022"
+
+      - name: Build library
+        shell: bash
+        run: |
+          mkdir -p build
+          pushd build
+            cmake ../systemc -DBUILD_SHARED_LIBS=OFF \
+                             -DCMAKE_CXX_STANDARD=14 \
+                             -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
+                              
+            cmake --build . -j $(nproc)
+          popd
+
+      - name: Upload SystemC library
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os == 'Windows' && format('{0}-{1}-libsystemc.lib', runner.os, github.run_id) || format('{0}-{1}-libsystemc.a', runner.os, github.run_id) }}
+          path: ${{ runner.os == 'Windows' && 'build/src/Debug/systemc.lib' || 'build/src/libsystemc.a' }}
 
   build-examples:
     name: Build Examples
-    runs-on: ubuntu-22.04
+    needs: build-systemc
+    strategy:
+      matrix:
+        os:
+          - ubuntu-22.04
+          - windows-2025
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Download SystemC library
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ runner.os == 'Windows' && format('{0}-{1}-libsystemc.lib', runner.os, github.run_id) || format('{0}-{1}-libsystemc.a', runner.os, github.run_id) }}
+          path: artifacts/systemc
 
       - name: Install dependencies
+        shell: bash
         run: |
-          sudo apt-get -qqy update
-          sudo apt-get install -qqy libsystemc libsystemc-dev clang cmake
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            sudo apt-get -qqy update
+            sudo apt-get install -qqy cmake
+          elif [ "${{ runner.os }}" = "Windows" ]; then
+            choco feature enable -n allowGlobalConfirmation
+            choco install cmake
+          else
+            echo "Unknown runner!"
+            exit 1
+          fi
 
       - name: Download and build Renode
         uses: antmicro/renode-test-action@v5.0.0
         with:
           renode-repository: ${{ inputs.renode_gitrepo || 'https://github.com/renode/renode' }}
-          renode-revision: ${{ inputs.renode_gitrev || 'master' }}
+          # renode-revision: ${{ inputs.renode_gitrev || 'master' }}
+          renode-revision: 90242-add-windows
+
+      - name: Set CMake generator
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          export CMAKE_GENERATOR="Visual Studio 17 2022"
 
       - name: Build examples
+        shell: bash
         run: |
           mkdir -p build
           pushd build
-            cmake ..
-            make CPPSTD=c++14 -j $(nproc)
+            cmake .. -DUSER_SYSTEMC_INCLUDE_DIR=$(pwd)/../systemc/src \
+                     -DUSER_SYSTEMC_LIB_DIR=$(pwd)/../artifacts/systemc \
+                     -DCMAKE_CXX_STANDARD=14
+
+            cmake --build . -j $(nproc)
           popd
 
           mkdir -p artifacts/example_binaries artifacts/test_binaries
+
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            bin_path="bin"
+          elif [ "${{ runner.os }}" = "Windows" ]; then
+            bin_path="bin/Debug"
+          else
+            echo "Unknown runner!"
+            exit 1
+          fi
+
           for example in examples/*/; do
             example_name="$(basename $example)"
-            cp examples/$example_name/bin/$example_name artifacts/example_binaries/x64-systemc--$example_name.elf
+            cp examples/$example_name/$bin_path/$example_name artifacts/example_binaries/x64-systemc--$example_name.elf
           done
           for test in tests/*/; do
             test_name="$(basename $test)"
-            cp tests/$test_name/bin/$test_name artifacts/test_binaries/x64-systemc--$test_name.elf
+            cp tests/$test_name/$bin_path/$test_name artifacts/test_binaries/x64-systemc--$test_name.elf
           done
         
       - name: Upload Example Binaries
         uses: actions/upload-artifact@v4
         with:
-          name: example_binaries-${{ github.run_id }}
+          name: example_binaries-${{ runner.os }}-${{ github.run_id }}
           path: artifacts/example_binaries
 
       - name: Upload Test Binaries
         uses: actions/upload-artifact@v4
         with:
-          name: test_binaries-${{ github.run_id }}
+          name: test_binaries-${{ runner.os }}-${{ github.run_id }}
           path: artifacts/test_binaries
 
   test-examples:
     name: Test Examples
-    runs-on: ubuntu-22.04
     needs: build-examples
+    strategy:
+      matrix:
+        os:
+          - ubuntu-22.04
+          - windows-2025
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get -qqy update
-          sudo apt-get install -qqy libsystemc libsystemc-dev
 
       - name: Download example binaries
         uses: actions/download-artifact@v4
         with:
-          name: example_binaries-${{ github.run_id }}
+          name: example_binaries-${{ runner.os }}-${{ github.run_id }}
           path: artifacts/example_binaries
 
       - name: Download test binaries
         uses: actions/download-artifact@v4
         with:
-          name: test_binaries-${{ github.run_id }}
+          name: test_binaries-${{ runner.os }}-${{ github.run_id }}
           path: artifacts/test_binaries
 
       - name: Download and build Renode
         uses: antmicro/renode-test-action@v5.0.0
         with:
           renode-repository: ${{ inputs.renode_gitrepo || 'https://github.com/renode/renode' }}
-          renode-revision: ${{ inputs.renode_gitrev || 'master' }}
+          # renode-revision: ${{ inputs.renode_gitrev || 'master' }}
+          renode-revision: 90242-add-windows
 
       - name: Run tests
+        shell: bash
         run: |
           for example in artifacts/example_binaries/*; do
-            example_name="$(basename $example | sed -e 's/x64-systemc--//' -e 's/.elf//')"
+            example_name="$(basename $example | sed -e 's/x64-systemc--//' -e 's/.elf//' -e 's/.exe//')"
             mkdir -p examples/$example_name/bin
             cp $example examples/$example_name/bin/$example_name
           done
 
           for test in artifacts/test_binaries/*; do
-            test_name="$(basename $test | sed -e 's/x64-systemc--//' -e 's/.elf//')"
+            test_name="$(basename $test | sed -e 's/x64-systemc--//' -e 's/.elf//' -e 's/.exe//')"
             mkdir -p tests/$test_name/bin
             cp $test tests/$test_name/bin/$test_name
           done

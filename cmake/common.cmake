@@ -72,3 +72,8 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS} systemc/include ${SYSCMODULE_DIR}/include)
 add_executable(${EXAMPLE_NAME} ${SOURCES})
 target_include_directories(${EXAMPLE_NAME} PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(${EXAMPLE_NAME} ${SYSTEMC_LIB} renode_bridge)
+
+if (MSVC)
+    target_compile_options(${EXAMPLE_NAME} PRIVATE "/vmg")
+    target_link_options(${EXAMPLE_NAME} PRIVATE "/ignore:4099")
+endif()
