@@ -5,3 +5,4 @@ build
 *.html
 *.xml
 tags
+artifacts
