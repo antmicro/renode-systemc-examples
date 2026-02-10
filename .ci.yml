@@ -21,8 +21,10 @@ Build SystemC:
     - mkdir -p build artifacts/systemc
     - |
       pushd build
-        cmake ../systemc -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_STANDARD=14
-        make -j $(nproc)
+        cmake ../systemc -DBUILD_SHARED_LIBS=OFF \
+                         -DCMAKE_CXX_STANDARD=14 \
+                         -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
+        cmake --build . -j $(nproc)
       popd
     - cp build/src/libsystemc.a artifacts/systemc
   artifacts:
@@ -60,8 +62,11 @@ Build Examples:
     - mkdir -p build
     - |
       pushd build
-        cmake .. -DUSER_RENODE_DIR=/opt/renode -DUSER_SYSTEMC_INCLUDE_DIR=$(pwd)/../systemc/src -DUSER_SYSTEMC_LIB_DIR=$(pwd)/../artifacts/systemc -DCMAKE_CXX_STANDARD=14
-        make -j $(nproc)
+        cmake .. -DUSER_RENODE_DIR=/opt/renode \
+                 -DUSER_SYSTEMC_INCLUDE_DIR=$(pwd)/../systemc/src \
+                 -DUSER_SYSTEMC_LIB_DIR=$(pwd)/../artifacts/systemc \
+                 -DCMAKE_CXX_STANDARD=14
+        cmake --build . -j $(nproc)
       popd
 
     - mkdir -p artifacts/example_binaries artifacts/test_binaries
