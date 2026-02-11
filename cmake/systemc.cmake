@@ -1,0 +1,15 @@
+if(DEFINED USER_SYSTEMC_LIB_DIR)
+    message(STATUS "Looking for SystemC library in: ${USER_SYSTEMC_LIB_DIR}")
+    find_library(systemc PATHS ${USER_SYSTEMC_LIB_DIR} NAMES systemc libsystemc)
+else()
+    message(WARNING "No USER_SYSTEMC_LIB_DIR specified - attempting to use system-wide SystemC installation.")
+    find_library(systemc NAMES systemc libsystemc)
+endif()
+
+if(DEFINED USER_SYSTEMC_INCLUDE_DIR)
+    target_include_directories(${EXAMPLE_NAME} PUBLIC ${USER_SYSTEMC_INCLUDE_DIR})
+else()
+    message(WARNING "No USER_SYSTEMC_INCLUDE_DIR specified - headers will only be included from standard locations.")
+endif()
+
+target_link_libraries(${EXAMPLE_NAME} PRIVATE systemc)
