@@ -22,6 +22,7 @@ Build SystemC:
     - |
       pushd build
         cmake ../systemc -DBUILD_SHARED_LIBS=OFF \
+                         -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
                          -DCMAKE_CXX_STANDARD=14 \
                          -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
         cmake --build . -j $(nproc)
@@ -60,6 +61,8 @@ Build Examples:
     - apt-get -qqy install clang cmake git
   script:
     - mkdir -p build
+    - mkdir -p artifacts/{example_binaries,test_binaries,shared_libs}
+
     - |
       pushd build
         cmake .. -DUSER_RENODE_DIR=/opt/renode \
@@ -69,16 +72,21 @@ Build Examples:
         cmake --build . -j $(nproc)
       popd
 
-    - mkdir -p artifacts/example_binaries artifacts/test_binaries
     - |
       for example in examples/*/; do
         example_name="$(basename $example)"
-        cp examples/$example_name/bin/$example_name artifacts/example_binaries/x64-systemc--$example_name.elf
+        cp build/examples/$example_name/$example_name artifacts/example_binaries/x64-systemc--$example_name.elf
       done
     - |
       for test in tests/*/; do
         test_name="$(basename $test)"
-        cp tests/$test_name/bin/$test_name artifacts/test_binaries/x64-systemc--$test_name.elf
+        cp build/tests/$test_name/$test_name artifacts/test_binaries/x64-systemc--$test_name.elf
+      done
+    - |
+      for example in examples-native/*/; do
+        example_name="$(basename $example)"
+        library_name="lib$(basename $example | tr '-' '_').so"
+        cp -v build/examples-native/$example_name/$library_name artifacts/shared_libs/$library_name
       done
   artifacts:
     paths:
@@ -91,7 +99,7 @@ Test Examples:
     - Build Examples
   before_get_sources:
     - apt-get -qqy update
-    - apt-get -qqy install libsystemc libsystemc-dev
+    - apt-get -qqy install clang cmake git wget
   script:
     - |
       for example in artifacts/example_binaries/*; do
@@ -105,6 +113,18 @@ Test Examples:
         mkdir -p tests/$test_name/bin
         cp $test tests/$test_name/bin/$test_name
       done
+    - |
+      for example in artifacts/shared_libs/*; do
+        # tranform /bar/foo/libfoo_bar.so to foo-bar
+        example_name="$(basename $example | sed -e 's/\.so$//' -e 's/^lib//' | tr '_' '-')"
+        mkdir -p examples-native/$example_name/build
+        cp $example examples-native/$example_name/build
+      done
+
+    - |
+      pushd examples-native
+        renode-test -t all_examples.yaml
+      popd
 
     - |
       pushd examples
