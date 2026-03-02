@@ -109,6 +109,7 @@ jobs:
           mkdir -p build
           pushd build
             cmake ../systemc -DBUILD_SHARED_LIBS=OFF \
+                             -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
                              -DCMAKE_CXX_STANDARD=14 \
                              -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
                               
@@ -179,24 +180,38 @@ jobs:
             cmake --build . -j $(nproc)
           popd
 
-          mkdir -p artifacts/example_binaries artifacts/test_binaries
-
           if [ "${{ runner.os }}" = "Linux" ]; then
-            bin_path="bin"
+            bin_path="."
           elif [ "${{ runner.os }}" = "Windows" ]; then
-            bin_path="bin/Debug"
+            bin_path="Debug"
           else
             echo "Unknown runner!"
             exit 1
           fi
 
+          mkdir -p build
+          mkdir -p artifacts/{example_binaries,test_binaries,shared_libs}
+
           for example in examples/*/; do
             example_name="$(basename $example)"
-            cp examples/$example_name/$bin_path/$example_name artifacts/example_binaries/x64-systemc--$example_name.elf
+            cp build/examples/$example_name/$bin_path/$example_name artifacts/example_binaries/x64-systemc--$example_name
           done
           for test in tests/*/; do
             test_name="$(basename $test)"
-            cp tests/$test_name/$bin_path/$test_name artifacts/test_binaries/x64-systemc--$test_name.elf
+            cp build/tests/$test_name/$bin_path/$test_name artifacts/test_binaries/x64-systemc--$test_name
+          done
+          for example in examples-native/*/; do
+            example_name="$(basename $example)"
+
+            if [ "${{ runner.os }}" = "Linux" ]; then
+              bin_path="."
+              library_name="lib$(basename $example | tr '-' '_').so"
+            elif [ "${{ runner.os }}" = "Windows" ]; then
+              bin_path="Debug"
+              library_name="$(basename $example | tr '-' '_').dll"
+            fi
+
+            cp build/examples-native/$example_name/$bin_path/$library_name artifacts/shared_libs/$library_name
           done
         
       - name: Upload Example Binaries
@@ -210,6 +225,12 @@ jobs:
         with:
           name: test_binaries-${{ runner.os }}-${{ github.run_id }}
           path: artifacts/test_binaries
+
+      - name: Upload Example Libs
+        uses: actions/upload-artifact@v4
+        with:
+          name: example_libs-${{ runner.os }}-${{ github.run_id }}
+          path: artifacts/shared_libs
 
   test-examples:
     name: Test Examples
@@ -235,13 +256,38 @@ jobs:
           name: test_binaries-${{ runner.os }}-${{ github.run_id }}
           path: artifacts/test_binaries
 
+      - name: Download example libs
+        uses: actions/download-artifact@v4
+        with:
+          name: example_libs-${{ runner.os }}-${{ github.run_id }}
+          path: artifacts/shared_libs
+
       - name: Download and build Renode
         uses: antmicro/renode-test-action@v5.0.0
         with:
           renode-repository: ${{ inputs.renode_gitrepo || 'https://github.com/renode/renode' }}
           renode-revision: ${{ inputs.renode_gitrev || 'master' }}
 
-      - name: Run tests
+      - name: Run tests (native)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          for example in artifacts/shared_libs/*; do
+            example_name="$(basename $example | sed -e 's/\.so$//' -e 's/\.dll$//' -e 's/^lib//' | tr '_' '-')"
+            if [ "${{ runner.os }}" = "Linux" ]; then
+              bin_path="."
+            elif [ "${{ runner.os }}" = "Windows" ]; then
+              bin_path="Debug"
+            fi
+            mkdir -p examples-native/$example_name/build/$bin_path
+            cp $example examples-native/$example_name/build/$bin_path
+          done
+
+          pushd examples-native
+            renode-test -t all_examples.yaml
+          popd
+          
+      - name: Run tests (socket)
         shell: bash
         run: |
           for example in artifacts/example_binaries/*; do
