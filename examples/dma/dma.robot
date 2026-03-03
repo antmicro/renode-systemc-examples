@@ -10,7 +10,6 @@ Memory Should Be Equal To
 *** Test Cases ***
 Should Perform Memory-To-Memory Transfer
     Execute Script                  ${SCRIPT_PATH}
-    Start Emulation
 
     # Initialize memory
     Execute Command                 memory WriteString 0 "Hello"
@@ -36,6 +35,9 @@ Should Perform Memory-To-Memory Transfer
 
     # Signal "bus free" to notify DMAC it can use the bus now.
     Execute Command                 sysbus.dma_systemc OnGPIO 2 True
+
+    # Give some time for the transfer to finish
+    Execute Command                 emulation RunFor "0.1"
 
     # Verify the memory was copied correctly.
     # "H"
