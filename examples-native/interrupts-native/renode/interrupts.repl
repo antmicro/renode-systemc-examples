@@ -1,0 +1,6 @@
+using "platforms/cpus/stm32f4.repl"
+
+systemc: SystemC.SystemCPeripheralNative @ sysbus <0x9000000, +0xffffff>
+    simulationStepInNs: 1000000
+    0 -> nvic@55
+    1 -> nvic@56
