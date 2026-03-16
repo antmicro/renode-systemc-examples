@@ -6,3 +6,4 @@
 - transaction-delay/transaction-delay.robot
 - direct-connection/direct-connection.robot
 - multiple-peripherals/multiple-peripherals.robot
+- cortex-m-signals/cortex-m-signals.robot

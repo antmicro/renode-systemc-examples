@@ -1,0 +1,22 @@
+sram0: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x10000
+
+signals: SystemC.SystemCCortexMSignalsUnit @ sysbus <0x10000000, +0xfffffff>
+    address: "127.0.0.1"
+    port: 4242
+    timeSyncPeriodUS: 5000
+    cpu: cpu
+    nvic: nvic
+
+cpu: CPU.CortexM @ sysbus
+    cpuType: "cortex-m55"
+    nvic: nvic
+
+nvic: IRQControllers.NVIC @ {
+    sysbus new Bus.BusPointRegistration { address: 0xe000e000; cpu: cpu }
+}
+    -> cpu@0
+
+dwt: Miscellaneous.DWT @ sysbus 0xE0001000
+    frequency: 72000000
+
