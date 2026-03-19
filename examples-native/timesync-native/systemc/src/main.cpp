@@ -14,9 +14,13 @@ struct top : sc_core::sc_module, IRenodeBridge {
     // reset not supported for this DUT
   }
 
-  tlm::tlm_fw_transport_if<> *tlm() override {
+  tlm::tlm_fw_transport_if<> *tlm_route(std::uint64_t) override {
     // route all traffic to timekeeper
     return module;
+  }
+
+  void gpio_port_write(int number, bool value) override {
+    // gpio not supported for this DUT
   }
 };
 
