@@ -130,3 +130,15 @@ Should Receive System Reset Request Signal
     Execute Command                 nvic SystemResetRequest Set True
 
     SystemC Signal ${SIGNAL_SYSTEM_RESET_REQUEST} Should Be Set  message=SysResetReq should have gone high
+
+Should Trigger NVIC IRQs
+    Create Machine
+    Create Log Tester               1
+
+    # So we can see the IRQs getting triggered.
+    Execute Command                 logLevel 0 nvic
+
+    FOR  ${irq}  IN RANGE  480
+        Trigger SystemC Signal ${irq}
+        Wait For Log Entry              nvic: Set pending IRQ HardwareIRQ#${irq}
+    END
