@@ -1,11 +1,11 @@
 *** Variables ***
 ${SCRIPT_PATH}                      ${CURDIR}/renode/cortex-m-signals.resc
 
-${SIGNAL_NON_MASKABLE_INTERRUPT}    0
-${SIGNAL_CORE_RESET_IN}             1
-${SIGNAL_CPU_WAIT}                  2
-${SIGNAL_POWER_ON_RESET}            5
-${SIGNAL_SYSTEM_RESET_REQUEST}      6
+${SIGNAL_NON_MASKABLE_INTERRUPT}    1000
+${SIGNAL_CORE_RESET_IN}             1001
+${SIGNAL_CPU_WAIT}                  1002
+${SIGNAL_POWER_ON_RESET}            1005
+${SIGNAL_SYSTEM_RESET_REQUEST}      1006
 
 ${TRIGGER_SIGNAL_OFFSET}            0x100
 
@@ -25,7 +25,7 @@ SystemC Peripheral Should Return
     Should Be Equal As Integers     ${res}  ${value}  ${message}
 
 Write ${value} To SystemC Peripheral Offset ${offset}
-    Execute Command                 signals WriteByte ${offset} ${value}
+    Execute Command                 signals WriteDoubleWord ${offset} ${value}
 
 Trigger SystemC Signal ${signal}
     Write ${signal} To SystemC Peripheral Offset ${TRIGGER_SIGNAL_OFFSET}

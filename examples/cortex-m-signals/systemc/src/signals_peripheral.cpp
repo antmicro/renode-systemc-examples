@@ -63,6 +63,12 @@ void signals_peripheral::handle_write(tlm::tlm_generic_payload &payload) {
   auto request = *(Signal *)payload.get_data_ptr();
   std::cout << "Info: Will trigger signal " << request << "\n";
 
+  if (request >= Signal::NvicIrqsStart && request <= Signal::NvicIrqsEnd) {
+    std::cout << "Info: Signal is an NVIC IRQ\n";
+    out_nvic_irqs[request].write(true);
+    return;
+  }
+
   switch (request) {
   case Signal::NonMaskableInterrupt:
     out_non_maskable_interrupt.write(true);

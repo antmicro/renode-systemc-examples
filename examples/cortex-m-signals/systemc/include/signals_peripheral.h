@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <tlm.h>
 #include <tlm_utils/simple_target_socket.h>
 
@@ -8,6 +9,8 @@ public:
   signals_peripheral(sc_core::sc_module_name name);
 
   tlm_utils::simple_target_socket<signals_peripheral> bus_target_socket;
+
+  std::array<sc_core::sc_out<bool>, 480> out_nvic_irqs{}; // int_rq[480]
 
   sc_core::sc_out<bool> out_non_maskable_interrupt; // nmi_exp
   sc_core::sc_out<bool> out_core_reset_in;          // core_reset_in
@@ -27,15 +30,17 @@ private:
 };
 
 enum Signal {
-  NonMaskableInterrupt = 0,           // nmi_exp
-  CoreResetIn = 1,                    // core_reset_in
-  CpuWait = 2,                        // cpu_wait
-  InitNonSecureVectorTableOffset = 3, // init_ns_vtor
-  InitSecureVectorTableOffset = 4,    // m55_initsvtor
-  PowerOnReset = 5,                   // m55_poreset_n
-  SystemResetRequest = 6,             // O_sysreset_req
-  Sleeping = 7,                       // O_sleeping
-  SleepDeep = 8,                      // O_sleep_deep
+  NvicIrqsStart = 0,                     // int_rq[0]
+  NvicIrqsEnd = 479,                     // int_rq[479]
+  NonMaskableInterrupt = 1000,           // nmi_exp
+  CoreResetIn = 1001,                    // core_reset_in
+  CpuWait = 1002,                        // cpu_wait
+  InitNonSecureVectorTableOffset = 1003, // init_ns_vtor
+  InitSecureVectorTableOffset = 1004,    // m55_initsvtor
+  PowerOnReset = 1005,                   // m55_poreset_n
+  SystemResetRequest = 1006,             // O_sysreset_req
+  Sleeping = 1007,                       // O_sleeping
+  SleepDeep = 1008,                      // O_sleep_deep
 };
 
 constexpr uint64_t TRIGGER_SIGNAL_OFFSET = 0x100;

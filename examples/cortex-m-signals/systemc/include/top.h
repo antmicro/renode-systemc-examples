@@ -13,6 +13,8 @@ private:
   renode_bridge m_renode_bridge;
   signals_peripheral m_signals_peripheral;
 
+  std::array<sc_core::sc_signal<bool>, 480> m_out_nvic_irqs; // int_rq[480]
+
   sc_core::sc_signal<bool> m_out_non_maskable_interrupt; // nmi_exp
   sc_core::sc_signal<bool> m_out_core_reset_in;          // core_reset_in
   sc_core::sc_signal<bool> m_out_cpu_wait;               // cpu_wait

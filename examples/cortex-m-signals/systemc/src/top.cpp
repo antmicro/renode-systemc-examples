@@ -7,6 +7,12 @@ top::top(sc_core::sc_module_name name, const char *renode_address,
       m_signals_peripheral("m_signals_peripheral") {
   m_renode_bridge.initiator_socket(m_signals_peripheral.bus_target_socket);
 
+  for (int i = 0; i < 480; i++) {
+    m_renode_bridge.gpio_ports_in[Signal::NvicIrqsStart + i](
+        m_out_nvic_irqs[i]);
+    m_signals_peripheral.out_nvic_irqs[i](m_out_nvic_irqs[i]);
+  }
+
   m_renode_bridge.gpio_ports_in[Signal::NonMaskableInterrupt](
       m_out_non_maskable_interrupt);
   m_renode_bridge.gpio_ports_in[Signal::CoreResetIn](m_out_core_reset_in);
