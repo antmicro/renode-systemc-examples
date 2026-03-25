@@ -75,12 +75,12 @@ Build Examples:
     - |
       for example in examples/*/; do
         example_name="$(basename $example)"
-        cp build/examples/$example_name/$example_name artifacts/example_binaries/x64-systemc--$example_name.elf
+        cp -v build/examples/$example_name/$example_name artifacts/example_binaries/x64-systemc--$example_name.elf
       done
     - |
       for test in tests/*/; do
         test_name="$(basename $test)"
-        cp build/tests/$test_name/$test_name artifacts/test_binaries/x64-systemc--$test_name.elf
+        cp -v build/tests/$test_name/$test_name artifacts/test_binaries/x64-systemc--$test_name.elf
       done
     - |
       for example in examples-native/*/; do
