@@ -1,2 +1,3 @@
 - timesync-native/timesync-native.robot
 - interrupts-native/interrupts-native.robot
+- gpio-connection-native/gpio-connection-native.robot

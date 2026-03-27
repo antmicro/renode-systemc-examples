@@ -1,0 +1,5 @@
+systemc: SystemC.SystemCPeripheralNative @ sysbus <0x10000000, +0xfffffff>
+    simulationStepInNs: 5000000
+
+gpio: GPIOPort.MiV_CoreGPIO @ sysbus 0x20000000
+    1 -> systemc@2
