@@ -14,6 +14,10 @@ ${DUMMY_CPU_PC}                     0xdeadbeee
 *** Keywords ***
 Create Machine
     Execute Script                  ${SCRIPT_PATH}
+    Create Log Tester               1
+
+    # So we can see the GPIOs being activated.
+    Execute Command                 logLevel -1 signals
 
 SystemC Peripheral Should Return
     [Arguments]                     ${value}  ${offset}  ${message}
@@ -62,6 +66,11 @@ CPU Peripherals Should Have Reset
     Should Not Be Equal As Integers  ${dwt_counter_enabled_after}  0x0
     ...                             message=The DWT should have reset, but its cycle counter remained enabled
 
+Wait For SystemC Signal ${signal}
+    [Arguments]                     ${value}=True
+    # Wait until we have received the signal back from SystemC and handled it.
+    Wait For Log Entry              SystemC-triggered GPIO ${signal}, value ${value}
+
 *** Test Cases ***
 Should Raise Cpu Wait Signal
     Create Machine
@@ -71,8 +80,9 @@ Should Raise Cpu Wait Signal
 
     Trigger SystemC Signal ${SIGNAL_CPU_WAIT}
 
+    # Wait for the signal before checking CPU state, so it has time to update.
+    Wait For SystemC Signal ${SIGNAL_CPU_WAIT}
     ${cpu_wait_after}=              Run Renode Command  cpu CpuWaitSignal IsSet
-
     Should Not Be Equal             ${cpu_wait_before}  ${cpu_wait_after}  message=CPUWAIT signal should've been raised
 
 Raising Power-On Reset Signal Should Reset CPU Peripherals
@@ -83,6 +93,8 @@ Raising Power-On Reset Signal Should Reset CPU Peripherals
 
     Trigger SystemC Signal ${SIGNAL_POWER_ON_RESET}
 
+    # Wait for the signal before checking CPU state, so it has time to reset.
+    Wait For SystemC Signal ${SIGNAL_POWER_ON_RESET}
     CPU Peripherals Should Have Reset
 
 Raising Core Reset Signal Should Reset CPU Peripherals
@@ -93,18 +105,22 @@ Raising Core Reset Signal Should Reset CPU Peripherals
 
     Trigger SystemC Signal ${SIGNAL_CORE_RESET_IN}
 
+    # Wait for the signal before checking CPU state, so it has time to reset.
+    Wait For SystemC Signal ${SIGNAL_CORE_RESET_IN}
     CPU Peripherals Should Have Reset
 
 Should Trigger NMI
     Create Machine
-    Create Log Tester               1
 
-    # So we can see the GPIOs getting activated.
+    # So we can see the NVIC getting activated.
     Execute Command                 logLevel 0 nvic
 
     Trigger SystemC Signal ${SIGNAL_NON_MASKABLE_INTERRUPT}
 
+    # Check NVIC IRQ before checking for signal,
+    # because the signal gets logged after its events have been handled.
     Wait For Log Entry              Set pending IRQ NMI
+    Wait For SystemC Signal ${SIGNAL_NON_MASKABLE_INTERRUPT}
 
 Should Receive System Reset Request Signal
     Create Machine
