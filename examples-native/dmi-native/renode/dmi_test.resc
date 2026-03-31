@@ -1,0 +1,7 @@
+using sysbus
+mach create "dmi_test"
+
+machine LoadPlatformDescription $ORIGIN/dmi_test.repl
+
+sysbus LogPeripheralAccess dmi_test true
+sysbus.dmi_test SimulationFilePathLinux $ORIGIN/../build/libdmi_native.so
