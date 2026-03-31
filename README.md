@@ -1,6 +1,6 @@
 # Renode - SystemC integration examples
 
-Copyright (c) 2024 [Antmicro](https://www.antmicro.com)
+Copyright (c) 2024-2026 [Antmicro](https://www.antmicro.com)
 
 ## Overview
 
