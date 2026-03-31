@@ -13,6 +13,8 @@ signals_peripheral::signals_peripheral(sc_core::sc_module_name name)
   out_core_reset_in.initialize(false);
   out_cpu_wait.initialize(false);
   out_power_on_reset.initialize(false);
+  out_init_ns_vtor.initialize(memory_offset);
+  out_init_s_vtor.initialize(memory_offset);
 
   bus_target_socket.register_b_transport(
       this, &signals_peripheral::receive_b_transport);
@@ -85,6 +87,12 @@ void signals_peripheral::handle_write(tlm::tlm_generic_payload &payload) {
     break;
   case Signal::PowerOnReset:
     out_power_on_reset.write(true);
+    break;
+  case Signal::InitNonSecureVectorTableOffset:
+    out_init_ns_vtor.write(vector_table_offset_non_secure);
+    break;
+  case Signal::InitSecureVectorTableOffset:
+    out_init_s_vtor.write(vector_table_offset);
     break;
   default:
     std::cerr << "Error: Unhandled signal: " << static_cast<int>(request)

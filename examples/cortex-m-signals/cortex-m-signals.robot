@@ -4,6 +4,8 @@ ${SCRIPT_PATH}                      ${CURDIR}/renode/cortex-m-signals.resc
 ${SIGNAL_NON_MASKABLE_INTERRUPT}    1000
 ${SIGNAL_CORE_RESET_IN}             1001
 ${SIGNAL_CPU_WAIT}                  1002
+${SIGNAL_INIT_NS_VTOR}              1003
+${SIGNAL_INIT_S_VTOR}               1004
 ${SIGNAL_POWER_ON_RESET}            1005
 ${SIGNAL_SYSTEM_RESET_REQUEST}      1006
 
@@ -11,12 +13,36 @@ ${TRIGGER_SIGNAL_OFFSET}            0x100
 
 ${DUMMY_CPU_PC}                     0xdeadbeee
 
+# These are arbitrary values that get set by SystemC when triggering INITSVTOR/INITNSVTOR
+${VTOR_INITIAL_ADDRESS}             0x20000000
+${VTOR_NON_SECURE_PORT_ADDRESS}     0x2000A000
+${VTOR_PORT_ADDRESS}                0x2000B000
+
 *** Keywords ***
 Create Machine
+    # The setup script is loading a Cortex-M55 with TrustZone enabled
     Execute Script                  ${SCRIPT_PATH}
     Create Log Tester               1
 
     # So we can see the GPIOs being activated.
+    Execute Command                 logLevel -1 signals
+
+Create Machine With Trust Zone Enabled
+    Create Machine
+    Execute Command                 logLevel -1 cpu
+
+Create Machine With Trust Zone Disabled
+    Execute Command                 mach create "cortex-m-signals-trust-zone"
+    # Define a platform with a Cortex-M and with enabled Trust Zone
+    ${base_platform}=               Get File  ${CURDIR}/renode/cortex-m-signals.repl
+    ${platform}=                    Catenate  SEPARATOR=${\n}
+    ...                             ${base_platform}
+    ...                             cpu: { enableTrustZone: false }
+    Execute Command                 machine LoadPlatformDescriptionFromString """${platform}"""
+    Execute Command                 sysbus.signals SystemCExecutablePath @${CURDIR}/bin/cortex-m-signals
+
+    Create Log Tester               1
+    Execute Command                 logLevel -1 cpu
     Execute Command                 logLevel -1 signals
 
 SystemC Peripheral Should Return
@@ -133,7 +159,6 @@ Should Receive System Reset Request Signal
 
 Should Trigger NVIC IRQs
     Create Machine
-    Create Log Tester               1
 
     # So we can see the IRQs getting triggered.
     Execute Command                 logLevel 0 nvic
@@ -142,3 +167,83 @@ Should Trigger NVIC IRQs
         Trigger SystemC Signal ${irq}
         Wait For Log Entry              nvic: Set pending IRQ HardwareIRQ#${irq}
     END
+
+SystemC Should Set Non Secure Vector Table Offset Register Using Non Secure Port With TrustZone Enabled
+    Create Machine With Trust Zone Enabled
+
+    Trigger SystemC Signal ${SIGNAL_INIT_NS_VTOR}
+    Wait For Log Entry              signals: SystemC Non Secure Vector Table Offset: ${VTOR_NON_SECURE_PORT_ADDRESS}
+
+    # VectorTableOffsetNonSecure should not yet have been updated
+    ${vtor_non_secure}=             Execute Command  cpu VectorTableOffsetNonSecure
+    Should Be Equal As Integers     ${vtor_non_secure}  ${VTOR_INITIAL_ADDRESS}
+
+    Execute Command                 cpu Reset
+    Wait For Log Entry              cpu: VectorTableOffset_NS set to ${VTOR_NON_SECURE_PORT_ADDRESS}
+
+    # VectorTableOffsetNonSecure should have been updated out of reset
+    ${vtor_non_secure}=             Execute Command  cpu VectorTableOffsetNonSecure
+    Should Be Equal As Integers     ${vtor_non_secure}  ${VTOR_NON_SECURE_PORT_ADDRESS}
+
+    # The secure offset should remain unchanged
+    ${vtor}=                        Execute Command  cpu VectorTableOffset
+    Should Be Equal As Integers     ${vtor}  ${VTOR_INITIAL_ADDRESS}
+
+SystemC Should Set Vector Table Offset Register Using Secure Port With TrustZone Enabled
+    Create Machine With Trust Zone Enabled
+
+    Trigger SystemC Signal ${SIGNAL_INIT_S_VTOR}
+    Wait For Log Entry              signals: SystemC Vector Table Offset: ${VTOR_PORT_ADDRESS}
+
+    # VectorTableOffset should not yet have been updated
+    ${vtor}=                        Execute Command  cpu VectorTableOffset
+    Should Be Equal As Integers     ${vtor}  ${VTOR_INITIAL_ADDRESS}
+
+    Execute Command                 cpu Reset
+    Wait For Log Entry              cpu: VectorTableOffset set to ${VTOR_PORT_ADDRESS}
+
+    # VectorTableOffset should have been updated out of reset
+    ${vtor}=                        Execute Command  cpu VectorTableOffset
+    Should Be Equal As Integers     ${vtor}  ${VTOR_PORT_ADDRESS}
+
+    # The non-secure offset should remain unchanged
+    ${vtor_non_secure}=             Execute Command  cpu VectorTableOffsetNonSecure
+    Should Be Equal As Integers     ${vtor_non_secure}  ${VTOR_INITIAL_ADDRESS}
+
+SystemC Should Not Set Vector Table Offset Register Using Secure Port With TrustZone Disabled
+    Create Machine With Trust Zone Disabled
+
+    # Fast Model documentation states that `initsvtor` should be ignored when ARMv8-M Security Extensions are not included
+    Trigger SystemC Signal ${SIGNAL_INIT_S_VTOR}
+    Wait For Log Entry              signals: The Security Extension is not enabled. Ignoring Secure Vector table offset signal
+
+    # VectorTableOffset should not have been updated
+    ${vtor}=                        Execute Command  cpu VectorTableOffset
+    Should Be Equal As Integers     ${vtor}  ${VTOR_INITIAL_ADDRESS}
+
+    Execute Command                 cpu Reset
+    Wait For Log Entry              cpu: VectorTableOffset set to ${VTOR_INITIAL_ADDRESS}
+
+    # The offset should have stayed unchanged from the previous write
+    ${vtor}=                        Execute Command  cpu VectorTableOffset
+    Should Be Equal As Integers     ${vtor}  ${VTOR_INITIAL_ADDRESS}
+
+SystemC Should Set Vector Table Offset Register Using Non Secure Port With TrustZone Disabled
+    Create Machine With Trust Zone Disabled
+
+    # When TrustZone is disabled, the Secure/Non-Secure distinction does not exist,
+    # so VectorTableOffsetNonSecure has no meaning. Renode uses VectorTableOffset
+    # to represent the single unified vector table offset in this case.
+    Trigger SystemC Signal ${SIGNAL_INIT_NS_VTOR}
+    Wait For Log Entry              signals: SystemC Non Secure Vector Table Offset: ${VTOR_NON_SECURE_PORT_ADDRESS}
+
+    # VectorTableOffset should not yet have been updated
+    ${vtor}=                        Execute Command  cpu VectorTableOffset
+    Should Be Equal As Integers     ${vtor}  ${VTOR_INITIAL_ADDRESS}
+
+    Execute Command                 cpu Reset
+    Wait For Log Entry              cpu: VectorTableOffset set to ${VTOR_NON_SECURE_PORT_ADDRESS}
+
+    # VectorTableOffset should have been updated out of reset
+    ${vtor}=                        Execute Command  cpu VectorTableOffset
+    Should Be Equal As Integers     ${vtor}  ${VTOR_NON_SECURE_PORT_ADDRESS}

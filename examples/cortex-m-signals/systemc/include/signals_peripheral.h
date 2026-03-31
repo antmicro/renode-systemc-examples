@@ -20,6 +20,8 @@ public:
   sc_core::sc_out<bool> out_core_reset_in;          // core_reset_in
   sc_core::sc_out<bool> out_cpu_wait;               // cpu_wait
   sc_core::sc_out<bool> out_power_on_reset;         // m55_poreset_n
+  sc_core::sc_out<uint32_t> out_init_s_vtor;        // m55_initsvtor
+  sc_core::sc_out<uint32_t> out_init_ns_vtor;       // init_ns_vtor
 
   sc_core::sc_in<bool> in_system_reset_request; // O_sysreset_req
   sc_core::sc_in<bool> in_sleeping;             // O_sleeping
@@ -31,6 +33,12 @@ private:
   void on_gpio_in();
   void handle_read(tlm::tlm_generic_payload &trans);
   void handle_write(tlm::tlm_generic_payload &trans);
+
+  // Should be kept in sync with the variables in the robot file
+  const uint32_t vector_table_offset_non_secure = 0x2000a000;
+  const uint32_t vector_table_offset = 0x2000b000;
+  // The memory_offset should match the repl config
+  const uint32_t memory_offset = 0x20000000;
 };
 
 enum Signal {

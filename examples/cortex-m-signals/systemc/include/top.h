@@ -23,6 +23,8 @@ private:
   sc_core::sc_signal<bool> m_out_core_reset_in;          // core_reset_in
   sc_core::sc_signal<bool> m_out_cpu_wait;               // cpu_wait
   sc_core::sc_signal<bool> m_out_power_on_reset;         // m55_poreset_n
+  sc_core::sc_signal<uint32_t> m_out_init_s_vtor;        // m55_initsvtor
+  sc_core::sc_signal<uint32_t> m_out_init_ns_vtor;       // init_ns_vtor
 
   sc_core::sc_signal<bool> m_in_system_reset_request; // O_sysreset_req
   sc_core::sc_signal<bool> m_in_sleeping;             // O_sleeping

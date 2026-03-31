@@ -12,6 +12,7 @@ cpu: CPU.CortexM @ sysbus
     cpuType: "cortex-m55"
     nvic: nvic
     IsHalted: true
+    enableTrustZone: true
 
 nvic: IRQControllers.NVIC @ {
     sysbus new Bus.BusPointRegistration { address: 0xe000e000; cpu: cpu }
