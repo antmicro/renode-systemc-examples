@@ -7,6 +7,13 @@ variables:
   SCALENODE_DISK: 40
   RENODE_REF: 5744a5482f7a83447ee31173c695200966313076
 
+# Triggered for main pushes, schedules etc. and on MR creation or modification
+.only_main_and_all_mrs: &only_main_and_all_mrs
+  only:
+    variables:
+      - $CI_COMMIT_REF_NAME == "main"
+      - $CI_PIPELINE_SOURCE == "merge_request"
+
 stages:
   - Build dependencies
   - Build
@@ -15,6 +22,7 @@ stages:
 Build Renode:
   image: debian:bookworm
   stage: Build dependencies
+  <<: *only_main_and_all_mrs
   variables:
     SCALENODE_CPU: 6
     SCALENODE_DISK: 20
@@ -60,6 +68,7 @@ Build Renode:
 Build SystemC:
   image: debian:12.5-slim
   stage: Build dependencies
+  <<: *only_main_and_all_mrs
   before_get_sources:
     - apt-get -qqy update
     - apt-get install -qqy cmake clang git
@@ -81,6 +90,7 @@ Build SystemC:
 Build Zephyr Binaries:
   image: zephyrprojectrtos/ci:v0.28.2
   stage: Build dependencies
+  <<: *only_main_and_all_mrs
   script:
     - west init -l .
     - west update
@@ -102,6 +112,7 @@ Build Zephyr Binaries:
 Build Examples:
   image: debian:bookworm
   stage: Build
+  <<: *only_main_and_all_mrs
   before_get_sources:
     - apt-get -qqy update
     - apt-get -qqy install clang cmake git wget
@@ -147,6 +158,7 @@ Build Examples:
 Test Examples:
   image: debian:bookworm
   stage: Test
+  <<: *only_main_and_all_mrs
   dependencies:
     - Build Examples
     - Build Renode
