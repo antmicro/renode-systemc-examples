@@ -217,3 +217,15 @@ Test Examples:
       pushd tests
         renode-test -t all_tests.yaml
       popd
+  after_script:
+    - |
+      for dir in examples-native examples tests; do 
+        export TARGET_DIR=$(pwd)/artifacts/tests/$dir
+        pushd $dir
+          ../scripts/archive.sh robot_output.xml log.html report.html snapshots logs 
+        popd
+      done
+  artifacts:
+    paths:
+      - artifacts/tests
+    when: always
