@@ -6,6 +6,10 @@ variables:
   SCALENODE_RAM: 8192
   SCALENODE_DISK: 40
   RENODE_REF: 5744a5482f7a83447ee31173c695200966313076
+  RENODE_TEST_COMMON_OPTS: >-
+    --keep-renode-output
+    --kill-timeout 600
+    --test-timeout 10m
 
 # Triggered for main pushes, schedules etc. and on MR creation or modification
 .only_main_and_all_mrs: &only_main_and_all_mrs
@@ -205,17 +209,17 @@ Test Examples:
 
     - |
       pushd examples-native
-        renode-test -t all_examples.yaml
+        renode-test -t all_examples.yaml $RENODE_TEST_COMMON_OPTS
       popd
 
     - |
       pushd examples
-        renode-test -t all_examples.yaml
+        renode-test -t all_examples.yaml $RENODE_TEST_COMMON_OPTS
       popd
 
     - |
       pushd tests
-        renode-test -t all_tests.yaml
+        renode-test -t all_tests.yaml $RENODE_TEST_COMMON_OPTS
       popd
   after_script:
     - |
