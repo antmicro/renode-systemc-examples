@@ -1,3 +1,7 @@
+// Copyright (c) 2024-2026 Antmicro <www.antmicro.com>
+//
+// SPDX-License-Identifier: Apache-2.0
+
 using Antmicro.Renode.Core;
 using Antmicro.Renode.Logging;
 using Antmicro.Renode.Time;

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2024-2026 Antmicro <www.antmicro.com>
  *
  * SPDX-License-Identifier: Apache-2.0
  */

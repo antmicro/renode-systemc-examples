@@ -1,3 +1,7 @@
+// Copyright (c) 2024-2026 Antmicro <www.antmicro.com>
+//
+// SPDX-License-Identifier: Apache-2.0
+
 #include "gpio_peripheral.h"
 
 SC_HAS_PROCESS(gpio_peripheral);

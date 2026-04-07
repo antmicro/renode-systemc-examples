@@ -1,3 +1,7 @@
+// Copyright (c) 2024-2026 Antmicro <www.antmicro.com>
+//
+// SPDX-License-Identifier: Apache-2.0
+
 #include "peripheral.h"
 
 peripheral::peripheral(sc_core::sc_module_name name) {

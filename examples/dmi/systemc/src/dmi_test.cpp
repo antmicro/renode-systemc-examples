@@ -1,3 +1,8 @@
+// Copyright (c) 2024-2026 Antmicro <www.antmicro.com>
+// Copyright (c) 2024 Silicon Labs
+//
+// SPDX-License-Identifier: Apache-2.0
+
 #include "dmi_test.h"
 
 #include "tlm.h"

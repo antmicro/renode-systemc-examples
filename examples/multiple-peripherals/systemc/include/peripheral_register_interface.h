@@ -1,7 +1,7 @@
-/**
- * Copyright (c) 2024 Antmicro
- * Copyright (c) 2024 Silicon Labs
-*/
+// Copyright (c) 2024-2026 Antmicro <www.antmicro.com>
+// Copyright (c) 2024 Silicon Labs
+//
+// SPDX-License-Identifier: Apache-2.0
 
 /** \file
  *  \brief Contains the register interface API for the peripheral.

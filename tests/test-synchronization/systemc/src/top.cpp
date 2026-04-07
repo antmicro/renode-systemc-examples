@@ -1,3 +1,7 @@
+// Copyright (c) 2024-2026 Antmicro <www.antmicro.com>
+//
+// SPDX-License-Identifier: Apache-2.0
+
 #include "top.h"
 
 top::top(sc_core::sc_module_name name, const char *renode_address,
