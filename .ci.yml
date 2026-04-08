@@ -82,7 +82,7 @@ Build SystemC:
       pushd build
         cmake ../systemc -DBUILD_SHARED_LIBS=OFF \
                          -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-                         -DCMAKE_CXX_STANDARD=14 \
+                         -DCMAKE_CXX_STANDARD=17 \
                          -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
         cmake --build . -j $(nproc)
       popd
@@ -135,7 +135,7 @@ Build Examples:
         cmake .. -DUSER_RENODE_DIR=/opt/renode \
                  -DUSER_SYSTEMC_INCLUDE_DIR=$(pwd)/../systemc/src \
                  -DUSER_SYSTEMC_LIB_DIR=$(pwd)/../artifacts/systemc \
-                 -DCMAKE_CXX_STANDARD=14
+                 -DCMAKE_CXX_STANDARD=17
         cmake --build . -j $(nproc)
       popd
 

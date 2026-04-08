@@ -54,7 +54,7 @@ or pass an appropriate `-DCMAKE_CXX_STANDARD` argument to the relevant `cmake`
 call, for example:
 
 ``` bash
-$ cmake .. -DUSER_RENODE_DIR=<absolute path to Renode> -DCMAKE_CXX_STANDARD=14
+$ cmake .. -DUSER_RENODE_DIR=<absolute path to Renode> -DCMAKE_CXX_STANDARD=17
 ```
 
 This will build `renode_bridge` and the examples using the chosen
