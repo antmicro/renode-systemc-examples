@@ -2,3 +2,4 @@
 - interrupts-native/interrupts-native.robot
 - gpio-connection-native/gpio-connection-native.robot
 - dmi-native/dmi-native.robot
+- tlm-non-blocking-native/tlm-non-blocking.robot

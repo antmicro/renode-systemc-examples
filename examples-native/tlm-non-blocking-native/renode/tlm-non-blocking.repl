@@ -1,0 +1,6 @@
+using "platforms/cpus/stm32f4.repl"
+
+systemc: SystemC.SystemCPeripheralNative @ sysbus <0x9000000, 0x9000001>
+    simulationStepInNs: 1000000
+    nonBlockingWrites: true
+    nonBlockingReads: true
