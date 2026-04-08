@@ -1,0 +1,24 @@
+using sysbus
+$name?="stm32f401_mini"
+mach create $name
+
+machine LoadPlatformDescription $ORIGIN/tlm-non-blocking.repl
+showAnalyzer usart1
+
+sysbus LogPeripheralAccess systemc true
+sysbus.systemc SimulationFilePathLinux $ORIGIN/../build/libtlm_non_blocking_native.so
+sysbus.systemc SimulationFilePathWindows $ORIGIN\..\build\Debug\tlm_non_blocking_native.dll
+
+cpu AssembleBlock 0x08000000
+"""
+loop:
+    wfi
+    b loop
+"""
+
+macro reset
+"""
+    cpu PC 0x08000000
+"""
+
+runMacro $reset
