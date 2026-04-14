@@ -57,7 +57,7 @@ Build Renode:
     - |
       # Packages build
       pushd renode
-        ./build.sh -pt --source-package --no-gui
+        ./build.sh -t --source-package --no-gui
       popd 
       # Copy package to artifacts
       mkdir -p artifacts/renode
