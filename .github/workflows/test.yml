@@ -284,7 +284,7 @@ jobs:
           done
 
           pushd examples-native
-            renode-test -t all_examples.yaml
+            renode-test -t all_examples.yaml -r $(realpath -m ../artifacts/renode_logs/tests)
           popd
           
       - name: Run tests (socket)
@@ -303,9 +303,16 @@ jobs:
           done
 
           pushd examples
-            renode-test -t all_examples.yaml
+            renode-test -t all_examples.yaml -r $(realpath -m ../artifacts/renode_logs/examples)
           popd
 
           pushd tests
-            renode-test -t all_tests.yaml
+            renode-test -t all_tests.yaml -r $(realpath -m ../artifacts/renode_logs/tests)
           popd
+
+      - name: Upload Renode Logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renode_logs-${{ runner.os }}-${{ github.run_id }}
+          path: artifacts/renode_logs
