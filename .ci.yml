@@ -49,10 +49,7 @@ Build Renode:
     - |
       git clone https://gitlab-ci-token:$CI_BUILD_TOKEN@dev.antmicro.com/git/renode.git
       pushd renode
-        git checkout origin/master
-        renode-git-helper set-remotes -p --username gitlab-ci-token --password "$CI_BUILD_TOKEN"
-        git submodule update --init --recursive
-        git fetch --all
+        renode-git-helper clone-submodules --username gitlab-ci-token --password "$CI_BUILD_TOKEN"
         git checkout $RENODE_REF
         git submodule update --init --recursive
       popd
