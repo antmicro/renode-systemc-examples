@@ -119,10 +119,7 @@ Build Examples:
   <<: *only_main_and_all_mrs
   before_get_sources:
     - apt-get -qqy update
-    - apt-get -qqy install clang cmake git wget
-    - wget --tries=3 --progress=dot:giga https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-    - dpkg -i packages-microsoft-prod.deb
-    - apt -qqy update &> /dev/null && apt -y install dotnet-runtime-8.0
+    - apt-get -qqy install clang cmake git
   before_script:
     - mkdir -p /opt/renode
     - tar xf ./artifacts/renode/renode-*linux-portable.tar.gz -C /opt/renode --strip 1
@@ -168,10 +165,7 @@ Test Examples:
     - Build Renode
   before_get_sources:
     - apt -qqy update &> /dev/null
-    - apt -qqy install git clang wget cmake gcc python3 python3-pip python3-venv python3-dev locales parallel &> /dev/null
-    - wget --tries=3 --progress=dot:giga https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-    - dpkg -i packages-microsoft-prod.deb
-    - apt -qqy update &> /dev/null && apt -y install dotnet-runtime-8.0
+    - apt -qqy install git clang cmake gcc python3 python3-pip python3-venv python3-dev locales parallel &> /dev/null
   before_script:
     - |
       mkdir -p /opt/renode
