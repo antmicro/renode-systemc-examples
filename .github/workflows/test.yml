@@ -240,6 +240,7 @@ jobs:
         os:
           - ubuntu-22.04
           - windows-2025
+      fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -269,7 +270,6 @@ jobs:
           renode-revision: ${{ inputs.renode_gitrev || 'master' }}
 
       - name: Run tests (native)
-        if: runner.os == 'Linux'
         shell: bash
         run: |
           for example in artifacts/shared_libs/*; do
@@ -284,11 +284,16 @@ jobs:
           done
 
           pushd examples-native
-            renode-test -t all_examples.yaml -r $(realpath -m ../artifacts/renode_logs/tests)
+            TESTYAML=all_examples.yaml
+            if [ "${{ runner.os }}" = "Windows" ]; then
+              TESTYAML=all_examples_windows.yaml
+            fi
+            renode-test -t "$TESTYAML" -r "$(realpath -m ../artifacts/renode_logs/examples-native)"
           popd
           
       - name: Run tests (socket)
         shell: bash
+        if: always()
         run: |
           for example in artifacts/example_binaries/*; do
             example_name="$(basename $example | sed -e 's/x64-systemc--//' -e 's/.elf//' -e 's/.exe//')"
