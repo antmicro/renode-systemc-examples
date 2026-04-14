@@ -5,7 +5,7 @@ variables:
   SCALENODE_CPU: 4
   SCALENODE_RAM: 8192
   SCALENODE_DISK: 40
-  RENODE_REF: 5e276e25c2c71e62f2427c7773ca4c09f9a6c330
+  RENODE_VERSION: 5e276e25c2c71e62f2427c7773ca4c09f9a6c330
   RENODE_TEST_COMMON_OPTS: >-
     --keep-renode-output
     --kill-timeout 600
@@ -50,7 +50,7 @@ Build Renode:
       git clone https://gitlab-ci-token:$CI_BUILD_TOKEN@dev.antmicro.com/git/renode.git
       pushd renode
         renode-git-helper clone-submodules --username gitlab-ci-token --password "$CI_BUILD_TOKEN"
-        git checkout $RENODE_REF
+        git checkout $RENODE_VERSION
         git submodule update --init --recursive
       popd
   script:
