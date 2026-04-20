@@ -10,6 +10,7 @@ Memory Should Be Equal To
 *** Test Cases ***
 Should Perform Memory-To-Memory Transfer
     Execute Script                  ${SCRIPT_PATH}
+    Create LED Tester               sysbus.bus_request
 
     # Initialize memory
     Execute Command                 memory WriteString 0 "Hello"
@@ -36,8 +37,9 @@ Should Perform Memory-To-Memory Transfer
     # Signal "bus free" to notify DMAC it can use the bus now.
     Execute Command                 sysbus.dma_systemc OnGPIO 2 True
 
-    # Give some time for the transfer to finish
-    Execute Command                 emulation RunFor "0.1"
+    # Wait for the transfer to finish
+    Assert LED State                True  timeout=0.1
+    Assert LED State                False  timeout=0.1
 
     # Verify the memory was copied correctly.
     # "H"
