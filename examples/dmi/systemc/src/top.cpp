@@ -13,5 +13,7 @@ top::top(sc_core::sc_module_name name, const char *renode_address,
   m_renode_bridge.target_socket(m_dmi_test.bus_initiator_socket);
 
   m_renode_bridge.gpio_ports_out[1](dmi_test_begin);
+  m_renode_bridge.gpio_ports_in[2](dmi_test_done);
   m_dmi_test.test_begin(dmi_test_begin);
+  m_dmi_test.test_done(dmi_test_done);
 }

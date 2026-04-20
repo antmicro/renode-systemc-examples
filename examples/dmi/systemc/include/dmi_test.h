@@ -26,6 +26,9 @@ public:
   // Positive edge event signals used to start the test sequence
   sc_core::sc_in<bool> test_begin;
 
+  // Positive edge event signals used to indicate that the test sequence has completed successfully
+  sc_core::sc_out<bool> test_done;
+
   void dmi_test_sequence();
 
 private:

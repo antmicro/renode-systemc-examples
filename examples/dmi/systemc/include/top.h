@@ -19,4 +19,5 @@ private:
   dmi_test m_dmi_test;
 
   sc_core::sc_signal<bool> dmi_test_begin;
+  sc_core::sc_signal<bool> dmi_test_done;
 };

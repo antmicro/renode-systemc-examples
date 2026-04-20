@@ -128,6 +128,7 @@ void dmi_test::dmi_test_sequence() {
 
     if (read_data_word == write_data_word) {
       puts("DMI write data matched\n");
+      test_done.write(true);
     } else {
       fprintf(stderr, "DMI write data mismatched\n");
       assert(false);
