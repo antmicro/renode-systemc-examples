@@ -10,6 +10,7 @@ Memory Should Be Equal To
 *** Test Cases ***
 Should Perform Memory-To-Memory Transfer
     Execute Script                  ${SCRIPT_PATH}
+    Create LED Tester               sysbus.done
     Start Emulation
 
     # Initialize memory
@@ -18,6 +19,9 @@ Should Perform Memory-To-Memory Transfer
 
     # Signal dmi_test peripheral to begin the test
     Execute Command                 sysbus.dmi_test OnGPIO 1 True
+
+    # Wait for the test to complete
+    Assert LED State                true  timeout=1
 
     # Verify memory
     Memory Should Be Equal To       0x20001230  0x0b1e55ed

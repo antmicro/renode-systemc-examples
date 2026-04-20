@@ -124,6 +124,7 @@ void dmi_test::dmi_test_sequence() {
 
     if (read_data_word == write_data_word) {
       puts("DMI write data matched\n");
+      renode_gpio_update(2, 1);
     } else {
       std::cerr << "DMI write data mismatched\n";
       assert(false);
