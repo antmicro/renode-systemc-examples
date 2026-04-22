@@ -5,6 +5,7 @@
 #include <systemc>
 #include <tlm>
 #include <cstdint>
+#include <assert.h>
 #include "timekeeper.h"
 
 timekeeper::timekeeper(sc_core::sc_module_name name) {
@@ -15,8 +16,11 @@ void timekeeper::b_transport(tlm::tlm_generic_payload& payload, sc_core::sc_time
   if (!payload.is_read())
     return;
 
+  // detects mismatch if the tested Zephyr binary changes
+  // and alters the expected uint32_t reads
+  assert(payload.get_data_length() == sizeof(std::uint32_t));
   auto ts = sc_core::sc_time_stamp().to_seconds();
-  auto t = static_cast<std::uint64_t>(ts);
+  auto t = static_cast<std::uint32_t>(ts);
 
   std::memcpy(payload.get_data_ptr(), &t, sizeof(t));
 }
