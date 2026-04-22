@@ -11,3 +11,4 @@ showAnalyzer usart1 Antmicro.Renode.Analyzers.LoggingUartAnalyzer
 sysbus LoadELF $bin
 sysbus LogPeripheralAccess systemc true
 sysbus.systemc SimulationFilePathLinux $ORIGIN/../build/libtimesync_native.so
+sysbus.systemc SimulationFilePathWindows $ORIGIN\..\build\Debug\timesync_native.dll

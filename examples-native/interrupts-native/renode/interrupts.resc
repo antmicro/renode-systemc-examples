@@ -11,3 +11,4 @@ showAnalyzer usart1
 sysbus LoadELF $bin
 sysbus LogPeripheralAccess systemc true
 sysbus.systemc SimulationFilePathLinux $ORIGIN/../build/libinterrupts_native.so
+sysbus.systemc SimulationFilePathWindows $ORIGIN\..\build\Debug\interrupts_native.dll

@@ -6,3 +6,4 @@ machine LoadPlatformDescription $ORIGIN/gpio-connection.repl
 sysbus LogPeripheralAccess systemc true
 sysbus LogPeripheralAccess gpio true
 sysbus.systemc SimulationFilePathLinux $ORIGIN/../build/libgpio_connection_native.so
+sysbus.systemc SimulationFilePathWindows $ORIGIN/../build/Debug/gpio_connection_native.dll
