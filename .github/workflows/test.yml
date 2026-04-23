@@ -8,6 +8,7 @@ on:
       renode_gitrev:
         description: 'Renode git revision'
         required: false
+        default: '95150-win-systemc'
       renode_gitrepo:
         description: 'Renode git repository'
         required: false
