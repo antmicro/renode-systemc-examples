@@ -1,4 +1,2 @@
-- timesync-native/timesync-native.robot
-- interrupts-native/interrupts-native.robot
-- gpio-connection-native/gpio-connection-native.robot
+- !include { path: all_examples_windows.yaml }
 - dmi-native/dmi-native.robot

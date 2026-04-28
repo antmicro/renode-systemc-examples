@@ -308,7 +308,11 @@ jobs:
           done
 
           pushd examples
-            renode-test -t all_examples.yaml -r $(realpath -m ../artifacts/renode_logs/examples)
+            TESTYAML=all_examples.yaml
+            if [ "${{ runner.os }}" = "Windows" ]; then
+              TESTYAML=all_examples_windows.yaml
+            fi
+            renode-test -t "$TESTYAML" -r "$(realpath -m ../artifacts/renode_logs/examples)"
           popd
 
           pushd tests
