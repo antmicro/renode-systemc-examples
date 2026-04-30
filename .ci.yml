@@ -1,1 +1,4 @@
 include: renode-cosim-ci-scripts@master:systemc/ci.yml
+
+variables:
+  RENODE_VERSION: 94266-non-blocking-tlm
