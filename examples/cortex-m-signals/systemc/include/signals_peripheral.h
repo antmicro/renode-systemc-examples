@@ -31,6 +31,7 @@ private:
   void receive_b_transport(tlm::tlm_generic_payload &trans,
                            sc_core::sc_time &delay);
   void on_gpio_in();
+  void on_system_reset_request();
   void handle_read(tlm::tlm_generic_payload &trans);
   void handle_write(tlm::tlm_generic_payload &trans);
 

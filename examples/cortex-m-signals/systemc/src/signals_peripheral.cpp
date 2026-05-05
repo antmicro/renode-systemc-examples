@@ -16,6 +16,17 @@ signals_peripheral::signals_peripheral(sc_core::sc_module_name name)
 
   bus_target_socket.register_b_transport(
       this, &signals_peripheral::receive_b_transport);
+
+  SC_METHOD(on_system_reset_request);
+  sensitive << in_system_reset_request;
+  dont_initialize();
+}
+
+void signals_peripheral::on_system_reset_request() {
+  const auto reset_requested = in_system_reset_request.read();
+  if (reset_requested) {
+    out_core_reset_in.write(true);
+  }
 }
 
 void signals_peripheral::receive_b_transport(tlm::tlm_generic_payload &payload,
