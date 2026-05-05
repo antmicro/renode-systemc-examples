@@ -7,8 +7,6 @@
 SC_HAS_PROCESS(signals_peripheral);
 signals_peripheral::signals_peripheral(sc_core::sc_module_name name)
     : sc_module(name) {
-  sensitive << in_system_reset_request << in_sleeping << in_sleep_deep;
-
   out_non_maskable_interrupt.initialize(false);
   out_core_reset_in.initialize(false);
   out_cpu_wait.initialize(false);
