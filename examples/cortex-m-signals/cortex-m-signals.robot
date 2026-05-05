@@ -157,6 +157,23 @@ Should Receive System Reset Request Signal
 
     SystemC Signal ${SIGNAL_SYSTEM_RESET_REQUEST} Should Be Set  message=SysResetReq should have gone high
 
+System Reset Request Signal Should Be Cleared On Reset
+    Create Machine
+
+    # Make some changes to state, so we can see if it gets reset properly.
+    Modify CPU Peripheral State
+
+    SystemC Signal ${SIGNAL_SYSTEM_RESET_REQUEST} Should Be Unset  message=SysResetReq should initially be low
+    Execute Command                 nvic SystemResetRequest Set True
+    SystemC Signal ${SIGNAL_SYSTEM_RESET_REQUEST} Should Be Set  message=SysResetReq should have gone high
+
+    # SystemC should now raise the nSYSRESET signal
+    Wait For SystemC Signal ${SIGNAL_CORE_RESET_IN}
+    CPU Peripherals Should Have Reset
+
+    # Even if the reset signal is still held high, we want the SYSRESETREQ to have been cleared.
+    SystemC Signal ${SIGNAL_SYSTEM_RESET_REQUEST} Should Be Unset  message=SysResetReq should have been cleared
+
 Should Trigger NVIC IRQs
     Create Machine
 
