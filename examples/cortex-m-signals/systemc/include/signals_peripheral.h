@@ -55,5 +55,3 @@ enum Signal {
   Sleeping = 1007,                       // O_sleeping
   SleepDeep = 1008,                      // O_sleep_deep
 };
-
-constexpr uint64_t TRIGGER_SIGNAL_OFFSET = 0x100;

@@ -9,8 +9,6 @@ ${SIGNAL_INIT_S_VTOR}               1004
 ${SIGNAL_POWER_ON_RESET}            1005
 ${SIGNAL_SYSTEM_RESET_REQUEST}      1006
 
-${TRIGGER_SIGNAL_OFFSET}            0x100
-
 ${DUMMY_CPU_PC}                     0xdeadbeee
 
 # These are arbitrary values that get set by SystemC when triggering INITSVTOR/INITNSVTOR
@@ -51,10 +49,12 @@ SystemC Peripheral Should Return
     Should Be Equal As Integers     ${res}  ${value}  ${message}
 
 Write ${value} To SystemC Peripheral Offset ${offset}
-    Execute Command                 signals WriteDoubleWord ${offset} ${value}
+    Execute Command                 signals WriteByte ${offset} ${value}
 
 Trigger SystemC Signal ${signal}
-    Write ${signal} To SystemC Peripheral Offset ${TRIGGER_SIGNAL_OFFSET}
+    [Arguments]                     ${value}=${True}
+    ${value_bit}=                   Convert To Integer  ${value}
+    Write ${value_bit} To SystemC Peripheral Offset ${signal}
 
 SystemC Signal ${signal} Should Be ${state:(Set|Unset)}
     [Arguments]                     ${message}

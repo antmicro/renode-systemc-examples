@@ -69,33 +69,29 @@ void signals_peripheral::handle_read(tlm::tlm_generic_payload &payload) {
 
 void signals_peripheral::handle_write(tlm::tlm_generic_payload &payload) {
   assert(payload.is_write());
-  auto address = payload.get_address();
-  if (address != TRIGGER_SIGNAL_OFFSET) {
-    std::cout << "Warning: Unhandled write to unknown offset\n";
-    return;
-  }
+  auto offset = payload.get_address();
+  auto new_signal_state = static_cast<bool>(*(uint8_t *)payload.get_data_ptr());
+  std::cout << "Info: Will set signal " << offset << " to " << new_signal_state
+            << "\n";
 
-  auto request = *(Signal *)payload.get_data_ptr();
-  std::cout << "Info: Will trigger signal " << request << "\n";
-
-  if (request >= Signal::NvicIrqsStart && request <= Signal::NvicIrqsEnd) {
+  if (offset >= Signal::NvicIrqsStart && offset <= Signal::NvicIrqsEnd) {
     std::cout << "Info: Signal is an NVIC IRQ\n";
-    out_nvic_irqs[request].write(true);
+    out_nvic_irqs[offset].write(new_signal_state);
     return;
   }
 
-  switch (request) {
+  switch (offset) {
   case Signal::NonMaskableInterrupt:
-    out_non_maskable_interrupt.write(true);
+    out_non_maskable_interrupt.write(new_signal_state);
     break;
   case Signal::CoreResetIn:
-    out_core_reset_in.write(true);
+    out_core_reset_in.write(new_signal_state);
     break;
   case Signal::CpuWait:
-    out_cpu_wait.write(true);
+    out_cpu_wait.write(new_signal_state);
     break;
   case Signal::PowerOnReset:
-    out_power_on_reset.write(true);
+    out_power_on_reset.write(new_signal_state);
     break;
   case Signal::InitNonSecureVectorTableOffset:
     out_init_ns_vtor.write(vector_table_offset_non_secure);
@@ -104,7 +100,7 @@ void signals_peripheral::handle_write(tlm::tlm_generic_payload &payload) {
     out_init_s_vtor.write(vector_table_offset);
     break;
   default:
-    std::cerr << "Error: Unhandled signal: " << static_cast<int>(request)
+    std::cerr << "Error: Unhandled signal: " << static_cast<int>(offset)
               << std::endl;
     std::abort();
   }
