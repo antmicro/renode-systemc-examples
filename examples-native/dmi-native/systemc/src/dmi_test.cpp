@@ -5,7 +5,8 @@
 #include "renode_bridge_native.h"
 
 SC_HAS_PROCESS(dmi_test);
-dmi_test::dmi_test(sc_core::sc_module_name name) {
+dmi_test::dmi_test(sc_core::sc_module_name name, std::function<void()> reset_done, std::function<void()> mark_done)
+  : reset_done(reset_done), mark_done(mark_done) {
   SC_THREAD(dmi_test_sequence);
   // Use a large (8 MiB) fiber stack as we're going to be calling into C# directly from it and the
   // default 256 KiB is just the right size to not be detected as an overflow and instead silently
@@ -35,6 +36,7 @@ void dmi_test::dmi_test_sequence() {
   tlm::tlm_dmi dmi_data;
   while (true) {
     sc_core::wait(test_begin.posedge_event());
+    reset_done();
 
     std::cout << "First test: write via b_transport, read via DMI\n";
     test_address = 0x20001230;
@@ -124,7 +126,7 @@ void dmi_test::dmi_test_sequence() {
 
     if (read_data_word == write_data_word) {
       puts("DMI write data matched\n");
-      renode_gpio_update(2, 1);
+      mark_done();
     } else {
       std::cerr << "DMI write data mismatched\n";
       assert(false);

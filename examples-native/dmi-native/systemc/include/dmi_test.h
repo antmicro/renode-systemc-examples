@@ -3,11 +3,12 @@
 #include <tlm>
 #include "tlm_utils/simple_initiator_socket.h"
 
+#include <functional>
 #include <memory>
 
 class dmi_test : public sc_core::sc_module {
 public:
-  dmi_test(sc_core::sc_module_name name);
+  dmi_test(sc_core::sc_module_name name, std::function<void()> reset_done, std::function<void()> mark_done);
 
   // Socket for sending requests to the memory
   tlm_utils::simple_initiator_socket<dmi_test> bus_initiator_socket;
@@ -18,5 +19,7 @@ public:
   void dmi_test_sequence();
 
 private:
+  std::function<void()> reset_done;
+  std::function<void()> mark_done;
   std::unique_ptr<tlm::tlm_generic_payload> payload;
 };
