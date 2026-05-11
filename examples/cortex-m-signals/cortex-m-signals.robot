@@ -111,6 +111,23 @@ Should Raise Cpu Wait Signal
     ${cpu_wait_after}=              Run Renode Command  cpu CpuWaitSignal IsSet
     Should Not Be Equal             ${cpu_wait_before}  ${cpu_wait_after}  message=CPUWAIT signal should've been raised
 
+Should Lower Cpu Wait Signal
+    Create Machine
+
+    # Start with the signal raised.
+    Trigger SystemC Signal ${SIGNAL_CPU_WAIT}  value=${True}
+    Wait For SystemC Signal ${SIGNAL_CPU_WAIT}  value=${True}
+
+    ${cpu_wait_before}=             Run Renode Command  cpu CpuWaitSignal IsSet
+    Should Be Equal                 ${cpu_wait_before}  True  message=CPUWAIT should start off high
+
+    Trigger SystemC Signal ${SIGNAL_CPU_WAIT}  value=${False}
+
+    # Wait for the signal before checking CPU state, so it has time to update.
+    Wait For SystemC Signal ${SIGNAL_CPU_WAIT}  value=${False}
+    ${cpu_wait_after}=              Run Renode Command  cpu CpuWaitSignal IsSet
+    Should Not Be Equal             ${cpu_wait_before}  ${cpu_wait_after}  message=CPUWAIT signal should've been lowered
+
 Raising Power-On Reset Signal Should Reset CPU Peripherals
     Create Machine
 
