@@ -10,11 +10,11 @@ struct top : sc_core::sc_module, IRenodeBridge, tlm::tlm_bw_transport_if<> {
     // intentionally left empty
   }
 
-  void invalidate_direct_mem_ptr(sc_dt::uint64, sc_dt::uint64) {
+  void invalidate_direct_mem_ptr(sc_dt::uint64, sc_dt::uint64) override {
     // DMIs not supported on this initiator
   }
 
-  tlm::tlm_sync_enum nb_transport_bw(tlm::tlm_generic_payload& payload, tlm::tlm_phase& phase, sc_core::sc_time&) {
+  tlm::tlm_sync_enum nb_transport_bw(tlm::tlm_generic_payload& payload, tlm::tlm_phase& phase, sc_core::sc_time&) override {
     if (phase == tlm::END_REQ) {
       return tlm::TLM_ACCEPTED;
     }
