@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.18.4)
 
 project(renode_systemc_examples)
 
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+endif()
+
 file(GLOB ALL_EXAMPLES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} examples/*/)
 foreach(example ${ALL_EXAMPLES})
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${example}/)

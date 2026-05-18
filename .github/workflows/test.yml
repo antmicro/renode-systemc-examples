@@ -174,8 +174,7 @@ jobs:
           mkdir -p build
           pushd build
             cmake .. -DUSER_SYSTEMC_INCLUDE_DIR=$(pwd)/../systemc/src \
-                     -DUSER_SYSTEMC_LIB_DIR=$(pwd)/../artifacts/systemc \
-                     -DCMAKE_CXX_STANDARD=17
+                     -DUSER_SYSTEMC_LIB_DIR=$(pwd)/../artifacts/systemc
 
             cmake --build . -j $(nproc)
           popd
