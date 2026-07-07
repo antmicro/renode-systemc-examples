@@ -24,6 +24,8 @@ Create Machine
 
     # So we can see the GPIOs being activated.
     Execute Command                 logLevel -1 signals
+    # So we can see the CPU being resumed after reset.
+    Execute Command                 logLevel -1 cpu
 
 Create Machine With Trust Zone Enabled
     Create Machine
@@ -95,7 +97,12 @@ CPU Peripherals Should Have Reset
 Wait For SystemC Signal ${signal}
     [Arguments]                     ${value}=True
     # Wait until we have received the signal back from SystemC and handled it.
+    # If entry was already logged before calling the keyword, no active waiting is used
+    # and the virtual time doesn't progress if emulation isn't already running.
     Wait For Log Entry              SystemC-triggered GPIO ${signal}, value ${value}
+
+Wait For Cpu Resume After Reset
+    Wait For Log Entry              Resumed  level=Noisy
 
 *** Test Cases ***
 Should Raise Cpu Wait Signal
@@ -136,8 +143,9 @@ Raising Power-On Reset Signal Should Reset CPU Peripherals
 
     Trigger SystemC Signal ${SIGNAL_POWER_ON_RESET}
 
-    # Wait for the signal before checking CPU state, so it has time to reset.
-    Wait For SystemC Signal ${SIGNAL_POWER_ON_RESET}
+    # Reset is asynchronous when sideband channel is disabled, so wait for the end of a reset sequence.
+    Wait For Cpu Resume After Reset
+
     CPU Peripherals Should Have Reset
 
 Raising Core Reset Signal Should Reset CPU Peripherals
@@ -148,8 +156,9 @@ Raising Core Reset Signal Should Reset CPU Peripherals
 
     Trigger SystemC Signal ${SIGNAL_CORE_RESET_IN}
 
-    # Wait for the signal before checking CPU state, so it has time to reset.
-    Wait For SystemC Signal ${SIGNAL_CORE_RESET_IN}
+    # Reset is asynchronous when sideband channel is disabled, so wait for the end of a reset sequence.
+    Wait For Cpu Resume After Reset
+
     CPU Peripherals Should Have Reset
 
 Should Trigger NMI
@@ -184,8 +193,9 @@ System Reset Request Signal Should Be Cleared On Reset
     Execute Command                 nvic SystemResetRequest Set True
     SystemC Signal ${SIGNAL_SYSTEM_RESET_REQUEST} Should Be Set  message=SysResetReq should have gone high
 
-    # SystemC should now raise the nSYSRESET signal
-    Wait For SystemC Signal ${SIGNAL_CORE_RESET_IN}
+    # Reset is asynchronous when sideband channel is disabled, so wait for the end of a reset sequence.
+    Wait For Cpu Resume After Reset
+
     CPU Peripherals Should Have Reset
 
     # Even if the reset signal is still held high, we want the SYSRESETREQ to have been cleared.
