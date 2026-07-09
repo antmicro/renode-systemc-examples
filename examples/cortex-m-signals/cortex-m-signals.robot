@@ -101,8 +101,8 @@ Wait For SystemC Signal ${signal}
     # and the virtual time doesn't progress if emulation isn't already running.
     Wait For Log Entry              SystemC-triggered GPIO ${signal}, value ${value}
 
-Wait For Cpu Resume After Reset
-    Wait For Log Entry              Resumed  level=Noisy
+Wait For Cpu And Peripherals Reset After Signal
+    Wait For Log Entry              signals: Cpu and peripherals were reset after signal  level=Debug
 
 *** Test Cases ***
 Should Raise Cpu Wait Signal
@@ -144,7 +144,7 @@ Raising Power-On Reset Signal Should Reset CPU Peripherals
     Trigger SystemC Signal ${SIGNAL_POWER_ON_RESET}
 
     # Reset is asynchronous when sideband channel is disabled, so wait for the end of a reset sequence.
-    Wait For Cpu Resume After Reset
+    Wait For Cpu And Peripherals Reset After Signal
 
     CPU Peripherals Should Have Reset
 
@@ -157,7 +157,7 @@ Raising Core Reset Signal Should Reset CPU Peripherals
     Trigger SystemC Signal ${SIGNAL_CORE_RESET_IN}
 
     # Reset is asynchronous when sideband channel is disabled, so wait for the end of a reset sequence.
-    Wait For Cpu Resume After Reset
+    Wait For Cpu And Peripherals Reset After Signal
 
     CPU Peripherals Should Have Reset
 
@@ -194,7 +194,7 @@ System Reset Request Signal Should Be Cleared On Reset
     SystemC Signal ${SIGNAL_SYSTEM_RESET_REQUEST} Should Be Set  message=SysResetReq should have gone high
 
     # Reset is asynchronous when sideband channel is disabled, so wait for the end of a reset sequence.
-    Wait For Cpu Resume After Reset
+    Wait For Cpu And Peripherals Reset After Signal
 
     CPU Peripherals Should Have Reset
 
