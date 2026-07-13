@@ -47,6 +47,6 @@ mkdir -p artifacts/zephyr_binaries
 
 for example in examples/*/zephyr; do
   example_name=$(echo "$example" | cut -f 2 -d '/')
-  west build -p -b stm32f401_mini "$example"
+  west build -p -b stm32f401_mini "$example" -DZEPHYR_TOOLCHAIN_VARIANT="zephyr"
   cp build/zephyr/zephyr.elf artifacts/zephyr_binaries/"$example_name".elf
 done
