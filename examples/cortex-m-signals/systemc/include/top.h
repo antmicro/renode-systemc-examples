@@ -29,4 +29,5 @@ private:
   sc_core::sc_signal<bool> m_in_system_reset_request; // O_sysreset_req
   sc_core::sc_signal<bool> m_in_sleeping;             // O_sleeping
   sc_core::sc_signal<bool> m_in_sleep_deep;           // O_sleep_deep
+  sc_core::sc_signal<bool> m_in_lockup;               // O_lockup
 };

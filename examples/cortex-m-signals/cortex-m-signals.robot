@@ -8,6 +8,7 @@ ${SIGNAL_INIT_NS_VTOR}              1003
 ${SIGNAL_INIT_S_VTOR}               1004
 ${SIGNAL_POWER_ON_RESET}            1005
 ${SIGNAL_SYSTEM_RESET_REQUEST}      1006
+${SIGNAL_LOCKUP}                    1009
 
 ${DUMMY_CPU_PC}                     0xdeadbeee
 
@@ -15,6 +16,8 @@ ${DUMMY_CPU_PC}                     0xdeadbeee
 ${VTOR_INITIAL_ADDRESS}             0x20000000
 ${VTOR_NON_SECURE_PORT_ADDRESS}     0x2000A000
 ${VTOR_PORT_ADDRESS}                0x2000B000
+${LOCKUP_CODE_ADDRESS}              0x20000200
+${LOCKUP_STACK_TOP}                 0x20001000
 
 *** Keywords ***
 Create Machine
@@ -200,6 +203,30 @@ System Reset Request Signal Should Be Cleared On Reset
 
     # Even if the reset signal is still held high, we want the SYSRESETREQ to have been cleared.
     SystemC Signal ${SIGNAL_SYSTEM_RESET_REQUEST} Should Be Unset  message=SysResetReq should have been cleared
+
+Should Receive Lockup Signal
+    Create Machine
+
+    SystemC Signal ${SIGNAL_LOCKUP} Should Be Unset  message=Lockup should initially be low
+    Execute Command                 nvic Lockup Set True
+    SystemC Signal ${SIGNAL_LOCKUP} Should Be Set  message=Lockup should have gone high
+    Execute Command                 nvic Lockup Set False
+    SystemC Signal ${SIGNAL_LOCKUP} Should Be Unset  message=Lockup should have gone low
+
+Lockup Signal Should Be Cleared On Reset
+    Create Machine
+
+    Execute Command                 nvic Lockup Set True
+    SystemC Signal ${SIGNAL_LOCKUP} Should Be Set  message=Lockup should have gone high
+
+    # Use a valid reset vector so leaving reset doesn't immediately enter a new Lockup.
+    Execute Command                 sysbus WriteDoubleWord ${VTOR_INITIAL_ADDRESS} ${LOCKUP_STACK_TOP}
+    Execute Command                 sysbus WriteDoubleWord ${{${VTOR_INITIAL_ADDRESS} + 0x4}} ${{${LOCKUP_CODE_ADDRESS} | 1}}
+
+    Trigger SystemC Signal ${SIGNAL_CORE_RESET_IN}
+    Wait For Cpu And Peripherals Reset After Signal
+
+    SystemC Signal ${SIGNAL_LOCKUP} Should Be Unset  message=Lockup should have been cleared
 
 Should Trigger NVIC IRQs
     Create Machine

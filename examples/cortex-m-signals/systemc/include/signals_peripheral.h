@@ -26,6 +26,7 @@ public:
   sc_core::sc_in<bool> in_system_reset_request; // O_sysreset_req
   sc_core::sc_in<bool> in_sleeping;             // O_sleeping
   sc_core::sc_in<bool> in_sleep_deep;           // O_sleep_deep
+  sc_core::sc_in<bool> in_lockup;               // O_lockup
 
 private:
   void receive_b_transport(tlm::tlm_generic_payload &trans,
@@ -54,4 +55,5 @@ enum Signal {
   SystemResetRequest = 1006,             // O_sysreset_req
   Sleeping = 1007,                       // O_sleeping
   SleepDeep = 1008,                      // O_sleep_deep
+  Lockup = 1009,                         // O_lockup
 };

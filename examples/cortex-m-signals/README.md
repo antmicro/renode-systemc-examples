@@ -2,7 +2,7 @@
 
 This basic example illustrates a SystemCCortexMSignalsUnit peripheral connected to an Arm Cortex-M55 CPU.
 
-From the perspective of the CPU, outgoing signals such as O_sysreset_req update the internal
+From the perspective of the CPU, outgoing signals such as O_sysreset_req and O_lockup update the internal
 state of the signals_peripheral. The SystemC state of these signals can be queried by reading from
 the offset in SystemCCortexMSignalsUnit that corresponds to the signal ID (e.g. 6 for O_sysreset_req).
 These reads are forwarded to the SystemC process, which checks the current state of the corresponding

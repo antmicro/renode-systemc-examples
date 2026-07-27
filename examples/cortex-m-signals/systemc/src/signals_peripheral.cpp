@@ -60,6 +60,9 @@ void signals_peripheral::handle_read(tlm::tlm_generic_payload &payload) {
   case Signal::SleepDeep:
     *is_set = in_sleep_deep.read();
     break;
+  case Signal::Lockup:
+    *is_set = in_lockup.read();
+    break;
   default:
     std::cerr << "Error: Unhandled signal: " << static_cast<int>(signal)
               << std::endl;

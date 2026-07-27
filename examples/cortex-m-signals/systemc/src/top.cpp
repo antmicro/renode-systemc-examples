@@ -32,10 +32,12 @@ top::top(sc_core::sc_module_name name, const char *renode_address,
       m_in_system_reset_request);
   m_renode_bridge.gpio_ports_out[Signal::Sleeping](m_in_sleeping);
   m_renode_bridge.gpio_ports_out[Signal::SleepDeep](m_in_sleep_deep);
+  m_renode_bridge.gpio_ports_out[Signal::Lockup](m_in_lockup);
 
   m_signals_peripheral.in_system_reset_request(m_in_system_reset_request);
   m_signals_peripheral.in_sleeping(m_in_sleeping);
   m_signals_peripheral.in_sleep_deep(m_in_sleep_deep);
+  m_signals_peripheral.in_lockup(m_in_lockup);
 
   m_renode_bridge.init_vtor_s_in(m_out_init_s_vtor);
   m_renode_bridge.init_vtor_ns_in(m_out_init_ns_vtor);
