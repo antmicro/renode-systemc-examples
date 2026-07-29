@@ -18,6 +18,8 @@ ${VTOR_NON_SECURE_PORT_ADDRESS}     0x2000A000
 ${VTOR_PORT_ADDRESS}                0x2000B000
 ${LOCKUP_CODE_ADDRESS}              0x20000200
 ${LOCKUP_STACK_TOP}                 0x20001000
+${LOCKUP_HARDFAULT_HANDLER}         0x20000340
+${LOCKUP_FAULT_ADDRESS}             0x40000000
 
 *** Keywords ***
 Create Machine
@@ -106,6 +108,21 @@ Wait For SystemC Signal ${signal}
 
 Wait For Cpu And Peripherals Reset After Signal
     Wait For Log Entry              signals: Cpu and peripherals were reset after signal  level=Debug
+
+Enter Instruction-Time Lockup
+    Execute Command                 sysbus UnhandledAccessBehaviour ThrowException
+    Execute Command                 sysbus WriteDoubleWord ${{${VTOR_INITIAL_ADDRESS} + 0xC}} ${{${LOCKUP_HARDFAULT_HANDLER} | 1}}
+    Execute Command                 cpu VectorTableOffset ${VTOR_INITIAL_ADDRESS}
+    Execute Command                 cpu AssembleBlock ${LOCKUP_CODE_ADDRESS} "ldr r1, [r0]"
+    Execute Command                 cpu AssembleBlock ${LOCKUP_HARDFAULT_HANDLER} "ldr r1, [r0]"
+    Execute Command                 cpu SP ${LOCKUP_STACK_TOP}
+    Execute Command                 cpu SetRegister "R0" ${LOCKUP_FAULT_ADDRESS}
+    Execute Command                 cpu PC ${{${LOCKUP_CODE_ADDRESS} | 1}}
+    Execute Command                 cpu IsHalted false
+
+    # The disabled BusFault from Thread mode escalates to HardFault. The same
+    # synchronous fault in its handler cannot escalate, entering Lockup.
+    Execute Command                 cpu Step 1
 
 *** Test Cases ***
 Should Raise Cpu Wait Signal
@@ -213,6 +230,16 @@ Should Receive Lockup Signal
     Execute Command                 nvic Lockup Set False
     SystemC Signal ${SIGNAL_LOCKUP} Should Be Unset  message=Lockup should have gone low
 
+Should Receive Core-Generated Lockup Signal
+    Create Machine
+
+    SystemC Signal ${SIGNAL_LOCKUP} Should Be Unset  message=Lockup should initially be low
+    Enter Instruction-Time Lockup
+
+    ${locked_up}=                   Execute Command  cpu IsLockedUp
+    Should Be Equal                 ${locked_up}  True  strip_spaces=True
+    SystemC Signal ${SIGNAL_LOCKUP} Should Be Set  message=Lockup signal should reflect architectural Lockup
+
 Lockup Signal Should Be Cleared On Reset
     Create Machine
 
@@ -225,6 +252,16 @@ Lockup Signal Should Be Cleared On Reset
 
     Trigger SystemC Signal ${SIGNAL_CORE_RESET_IN}
     Wait For Cpu And Peripherals Reset After Signal
+
+    SystemC Signal ${SIGNAL_LOCKUP} Should Be Unset  message=Lockup should have been cleared
+
+Core-Generated Lockup Signal Should Be Cleared On Reset
+    Create Machine
+
+    Enter Instruction-Time Lockup
+    SystemC Signal ${SIGNAL_LOCKUP} Should Be Set  message=Lockup should have gone high
+
+    Execute Command                 cpu Reset
 
     SystemC Signal ${SIGNAL_LOCKUP} Should Be Unset  message=Lockup should have been cleared
 
