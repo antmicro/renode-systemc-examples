@@ -97,8 +97,11 @@ Wait For SystemC Signal ${signal}
     # and the virtual time doesn't progress if emulation isn't already running.
     Wait For Log Entry              SystemC-triggered GPIO ${signal}, value ${value}
 
-Wait For Cpu And Peripherals Reset After Signal
-    Wait For Log Entry              signals: Cpu and peripherals were reset after signal  level=Debug
+Wait For Cpu To Be Held In Reset
+    Wait For Log Entry              signals: Cpu halted after reset signal assertion  level=Debug
+
+Wait For Cpu And Peripherals To Leave Reset
+    Wait For Log Entry              signals: Cpu and peripherals were reset after signal deassertion  level=Debug
 
 Enter Instruction-Time Lockup
     Execute Command                 sysbus UnhandledAccessBehaviour ThrowException
@@ -153,9 +156,9 @@ Raising Power-On Reset Signal Should Reset CPU Peripherals
     Modify CPU Peripheral State
 
     Trigger SystemC Signal ${SIGNAL_POWER_ON_RESET}
-
-    # Reset is asynchronous when sideband channel is disabled, so wait for the end of a reset sequence.
-    Wait For Cpu And Peripherals Reset After Signal
+    Wait For Cpu To Be Held In Reset
+    Trigger SystemC Signal ${SIGNAL_POWER_ON_RESET}  value=${False}
+    Wait For Cpu And Peripherals To Leave Reset
 
     CPU Peripherals Should Have Reset
 
@@ -166,11 +169,32 @@ Raising Core Reset Signal Should Reset CPU Peripherals
     Modify CPU Peripheral State
 
     Trigger SystemC Signal ${SIGNAL_CORE_RESET_IN}
-
-    # Reset is asynchronous when sideband channel is disabled, so wait for the end of a reset sequence.
-    Wait For Cpu And Peripherals Reset After Signal
+    Wait For Cpu To Be Held In Reset
+    Trigger SystemC Signal ${SIGNAL_CORE_RESET_IN}  value=${False}
+    Wait For Cpu And Peripherals To Leave Reset
 
     CPU Peripherals Should Have Reset
+
+Cortex-M0 Should Stay In Reset Until Reset Signal Is Deasserted
+    Create Machine                  cpu_type=cortex-m0  enable_trustzone=false
+    Execute Command                 cpu IsHalted false
+
+    ${cpu_wait}=                    Run Renode Command  cpu CpuWaitSignal IsSet
+    Should Be Equal                 ${cpu_wait}  False  CPUWAIT should be low for this test
+    ${is_halted_before_reset}=      Run Renode Command  cpu IsHalted
+    Should Be Equal                 ${is_halted_before_reset}  False
+
+    Trigger SystemC Signal ${SIGNAL_CORE_RESET_IN}
+    Wait For Cpu To Be Held In Reset
+
+    ${is_halted_in_reset}=          Run Renode Command  cpu IsHalted
+    Should Be Equal                 ${is_halted_in_reset}  True
+
+    Trigger SystemC Signal ${SIGNAL_CORE_RESET_IN}  value=${False}
+    Wait For Cpu And Peripherals To Leave Reset
+
+    ${is_halted_after_reset}=       Run Renode Command  cpu IsHalted
+    Should Be Equal                 ${is_halted_after_reset}  False
 
 Should Trigger NMI
     Create Machine
@@ -204,8 +228,9 @@ System Reset Request Signal Should Be Cleared On Reset
     Execute Command                 nvic SystemResetRequest Set True
     SystemC Signal ${SIGNAL_SYSTEM_RESET_REQUEST} Should Be Set  message=SysResetReq should have gone high
 
-    # Reset is asynchronous when sideband channel is disabled, so wait for the end of a reset sequence.
-    Wait For Cpu And Peripherals Reset After Signal
+    # The SystemC reset controller turns SYSRESETREQ into a reset pulse.
+    Wait For Cpu To Be Held In Reset
+    Wait For Cpu And Peripherals To Leave Reset
 
     CPU Peripherals Should Have Reset
 
@@ -242,7 +267,9 @@ Lockup Signal Should Be Cleared On Reset
     Execute Command                 sysbus WriteDoubleWord ${{${VTOR_INITIAL_ADDRESS} + 0x4}} ${{${LOCKUP_CODE_ADDRESS} | 1}}
 
     Trigger SystemC Signal ${SIGNAL_CORE_RESET_IN}
-    Wait For Cpu And Peripherals Reset After Signal
+    Wait For Cpu To Be Held In Reset
+    Trigger SystemC Signal ${SIGNAL_CORE_RESET_IN}  value=${False}
+    Wait For Cpu And Peripherals To Leave Reset
 
     SystemC Signal ${SIGNAL_LOCKUP} Should Be Unset  message=Lockup should have been cleared
 

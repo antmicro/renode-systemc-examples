@@ -17,15 +17,17 @@ signals_peripheral::signals_peripheral(sc_core::sc_module_name name)
   bus_target_socket.register_b_transport(
       this, &signals_peripheral::receive_b_transport);
 
-  SC_METHOD(on_system_reset_request);
-  sensitive << in_system_reset_request;
+  SC_THREAD(on_system_reset_request);
+  sensitive << in_system_reset_request.pos();
   dont_initialize();
 }
 
 void signals_peripheral::on_system_reset_request() {
-  const auto reset_requested = in_system_reset_request.read();
-  if (reset_requested) {
+  while (true) {
     out_core_reset_in.write(true);
+    wait(sc_core::SC_ZERO_TIME);
+    out_core_reset_in.write(false);
+    wait();
   }
 }
 
@@ -38,6 +40,9 @@ void signals_peripheral::receive_b_transport(tlm::tlm_generic_payload &payload,
     handle_read(payload);
   } else {
     handle_write(payload);
+    // Wait another delta cycle to let event-sensitive processes handle
+    // the signal update before the blocking transaction can reply.
+    wait(sc_core::SC_ZERO_TIME);
   }
   payload.set_response_status(tlm::TLM_OK_RESPONSE);
 }
@@ -107,4 +112,7 @@ void signals_peripheral::handle_write(tlm::tlm_generic_payload &payload) {
               << std::endl;
     std::abort();
   }
+
+  // Commit the update.
+  wait(sc_core::SC_ZERO_TIME);
 }
