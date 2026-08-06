@@ -1,6 +1,4 @@
 *** Variables ***
-${SCRIPT_PATH}                      ${CURDIR}/renode/cortex-m-signals.resc
-
 ${SIGNAL_NON_MASKABLE_INTERRUPT}    1000
 ${SIGNAL_CORE_RESET_IN}             1001
 ${SIGNAL_CPU_WAIT}                  1002
@@ -23,8 +21,16 @@ ${LOCKUP_FAULT_ADDRESS}             0x40000000
 
 *** Keywords ***
 Create Machine
-    # The setup script is loading a Cortex-M55 with TrustZone enabled
-    Execute Script                  ${SCRIPT_PATH}
+    [Arguments]                     ${cpu_type}=cortex-m55  ${enable_trustzone}=true
+    Execute Command                 mach create "cortex-m-signals"
+    ${base_platform}=               Get File  ${CURDIR}/renode/cortex-m-signals.repl
+    ${platform}=                    Catenate  SEPARATOR=${\n}
+    ...                             ${base_platform}
+    ...                             cpu: { cpuType: "${cpu_type}"; enableTrustZone: ${enable_trustzone} }
+    Execute Command                 machine LoadPlatformDescriptionFromString """${platform}"""
+    Execute Command                 sysbus LogPeripheralAccess signals true
+    Execute Command                 sysbus.signals SystemCExecutablePath @${CURDIR}/bin/cortex-m-signals
+
     Create Log Tester               1
 
     # So we can see the GPIOs being activated.
@@ -32,23 +38,8 @@ Create Machine
     # So we can see the CPU being resumed after reset.
     Execute Command                 logLevel -1 cpu
 
-Create Machine With Trust Zone Enabled
-    Create Machine
-    Execute Command                 logLevel -1 cpu
-
 Create Machine With Trust Zone Disabled
-    Execute Command                 mach create "cortex-m-signals-trust-zone"
-    # Define a platform with a Cortex-M and with enabled Trust Zone
-    ${base_platform}=               Get File  ${CURDIR}/renode/cortex-m-signals.repl
-    ${platform}=                    Catenate  SEPARATOR=${\n}
-    ...                             ${base_platform}
-    ...                             cpu: { enableTrustZone: false }
-    Execute Command                 machine LoadPlatformDescriptionFromString """${platform}"""
-    Execute Command                 sysbus.signals SystemCExecutablePath @${CURDIR}/bin/cortex-m-signals
-
-    Create Log Tester               1
-    Execute Command                 logLevel -1 cpu
-    Execute Command                 logLevel -1 signals
+    Create Machine                  enable_trustzone=false
 
 SystemC Peripheral Should Return
     [Arguments]                     ${value}  ${offset}  ${message}
@@ -277,7 +268,7 @@ Should Trigger NVIC IRQs
     END
 
 SystemC Should Set Non Secure Vector Table Offset Register Using Non Secure Port With TrustZone Enabled
-    Create Machine With Trust Zone Enabled
+    Create Machine
 
     Trigger SystemC Signal ${SIGNAL_INIT_NS_VTOR}
     Wait For Log Entry              signals: SystemC Non Secure Vector Table Offset: ${VTOR_NON_SECURE_PORT_ADDRESS}
@@ -298,7 +289,7 @@ SystemC Should Set Non Secure Vector Table Offset Register Using Non Secure Port
     Should Be Equal As Integers     ${vtor}  ${VTOR_INITIAL_ADDRESS}
 
 SystemC Should Set Vector Table Offset Register Using Secure Port With TrustZone Enabled
-    Create Machine With Trust Zone Enabled
+    Create Machine
 
     Trigger SystemC Signal ${SIGNAL_INIT_S_VTOR}
     Wait For Log Entry              signals: SystemC Vector Table Offset: ${VTOR_PORT_ADDRESS}
