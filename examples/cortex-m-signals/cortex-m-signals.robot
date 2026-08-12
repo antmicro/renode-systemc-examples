@@ -14,6 +14,7 @@ ${DUMMY_CPU_PC}                     0xdeadbeee
 ${VTOR_INITIAL_ADDRESS}             0x20000000
 ${VTOR_NON_SECURE_PORT_ADDRESS}     0x2000A000
 ${VTOR_PORT_ADDRESS}                0x2000B000
+${RESET_HANDLER_ADDRESS}            0x20000100
 ${LOCKUP_CODE_ADDRESS}              0x20000200
 ${LOCKUP_STACK_TOP}                 0x20001000
 ${LOCKUP_HARDFAULT_HANDLER}         0x20000340
@@ -67,6 +68,12 @@ Run Renode Command
     RETURN                          ${result}
 
 Modify CPU Peripheral State
+    # The CPU resumes when reset is deasserted. Use a valid reset vector so
+    # post-reset execution cannot alter the state under test.
+    Execute Command                 sysbus WriteDoubleWord ${VTOR_INITIAL_ADDRESS} ${LOCKUP_STACK_TOP}
+    Execute Command                 sysbus WriteDoubleWord ${{${VTOR_INITIAL_ADDRESS} + 0x4}} ${{${RESET_HANDLER_ADDRESS} | 1}}
+    Execute Command                 cpu AssembleBlock ${RESET_HANDLER_ADDRESS} "b ."
+
     Execute Command                 cpu PC ${DUMMY_CPU_PC}
     Execute Command                 nvic IRQ Set
     Execute Command                 dwt WriteDoubleWord 0x0 0x1
