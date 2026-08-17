@@ -94,7 +94,7 @@ CPU Peripherals Should Have Reset
     Should Not Be Equal As Integers  ${pc_after}  ${DUMMY_CPU_PC}
     ...                             message=The CPU should have reset, but its PC remained the same
     Should Be Equal                 ${nvic_irq_after}  False  The NVIC should have reset, but its IRQ remained high
-    Should Not Be Equal As Integers  ${dwt_counter_enabled_after}  0x0
+    Should Be Equal As Integers     ${dwt_counter_enabled_after}  0x0
     ...                             message=The DWT should have reset, but its cycle counter remained enabled
 
 Wait For SystemC Signal ${signal}

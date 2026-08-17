@@ -7,6 +7,7 @@ signals: SystemC.SystemCCortexMSignalsUnit @ sysbus <0x10000000, +0xfffffff>
     timeSyncPeriodUS: 5000
     cpu: cpu
     nvic: nvic
+    dwt: dwt
 
 cpu: CPU.CortexM @ sysbus
     cpuType: "cortex-m55"
