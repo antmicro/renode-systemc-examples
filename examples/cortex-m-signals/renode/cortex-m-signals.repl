@@ -1,13 +1,16 @@
 sram0: Memory.MappedMemory @ sysbus 0x20000000
     size: 0x10000
 
-signals: SystemC.SystemCCortexMSignalsUnit @ sysbus <0x10000000, +0xfffffff>
-    address: "127.0.0.1"
-    port: 4242
-    timeSyncPeriodUS: 5000
+cortexMBundle: SystemC.CortexMBundle
     cpu: cpu
     nvic: nvic
     dwt: dwt
+
+signals: SystemC.SystemCCortexMSignalsUnit @ sysbus <0x10000000, +0xfffffff>
+    cortexMBundles: [cortexMBundle]
+    address: "127.0.0.1"
+    port: 4242
+    timeSyncPeriodUS: 5000
 
 cpu: CPU.CortexM @ sysbus
     cpuType: "cortex-m55"
