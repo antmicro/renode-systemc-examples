@@ -1,0 +1,51 @@
+cortexMBundle: SystemC.CortexMBundle
+    cpu: m55
+    nvic: nvic
+    dwt: dwt
+
+cortexMBundle_m0: SystemC.CortexMBundle
+    cpu: m0
+    nvic: nvic_m0
+    dwt: dwt_m0
+
+cortexMProxy: SystemC.SystemCCortexMSignalsUnit @ {
+        sysbus new Bus.BusRangeRegistration { address: 0x00000000; size: 0xe0000000; cpu: m55 };
+        sysbus new Bus.BusRangeRegistration { address: 0x00000000; size: 0xe0000000; cpu: m0 };
+    }
+    cortexMBundles: [cortexMBundle, cortexMBundle_m0]
+    timeSyncPeriodUS: 10
+    disableTimeoutCheck: true
+
+m55: CPU.CortexM @ sysbus
+    cpuId: 0
+    cpuType: "cortex-m55"
+    nvic: nvic
+    IsHalted: true
+    enableTrustZone: true
+    PerformanceInMips: 400
+
+nvic: IRQControllers.NVIC @ {
+    sysbus new Bus.BusPointRegistration { address: 0xe000e000; cpu: m55 }
+}
+    -> m55@0
+
+dwt: Miscellaneous.DWT @ {
+    sysbus new Bus.BusPointRegistration { address: 0xe0001000; cpu: m55 }
+}
+    frequency: 72000000
+
+m0: CPU.CortexM @ sysbus
+    cpuId: 1
+    cpuType: "cortex-m0"
+    nvic: nvic_m0
+    IsHalted: true
+
+nvic_m0: IRQControllers.NVIC @ {
+    sysbus new Bus.BusPointRegistration { address: 0xe000e000; cpu: m0 }
+}
+    -> m0@0
+
+dwt_m0: Miscellaneous.DWT @ {
+    sysbus new Bus.BusPointRegistration { address: 0xe0001000; cpu: m0 }
+}
+    frequency: 72000000

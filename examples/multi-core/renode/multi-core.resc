@@ -1,0 +1,7 @@
+using sysbus
+$name?="multi-core"
+mach create $name
+
+machine LoadPlatformDescription $ORIGIN/multi-core.repl
+cortexMProxy SystemCExecutablePath $ORIGIN/../bin/multi-core
+cortexMProxy DisableDebugAccess false
