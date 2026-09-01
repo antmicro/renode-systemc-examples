@@ -6,6 +6,10 @@ if(NOT DEFINED CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 17)
 endif()
 
+# Benchmarks host Renode via librenode, so they require a Renode build with the
+# native interface included (./build.sh --shared) and are not built by default.
+option(BUILD_BENCHMARKS "Build benchmarks" OFF)
+
 file(GLOB ALL_EXAMPLES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} examples/*/)
 foreach(example ${ALL_EXAMPLES})
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${example}/)
@@ -24,5 +28,12 @@ file(GLOB ALL_EXAMPLES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} examples-native/*/)
 foreach(example ${ALL_EXAMPLES})
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${example})
         add_subdirectory(${example} ${CMAKE_BINARY_DIR}/${example})
+    endif()
+endforeach()
+
+file(GLOB ALL_BENCHMARKS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} benchmarks/*/)
+foreach(benchmark ${ALL_BENCHMARKS})
+    if(BUILD_BENCHMARKS AND IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${benchmark})
+        add_subdirectory(${benchmark} ${CMAKE_BINARY_DIR}/${benchmark})
     endif()
 endforeach()

@@ -1,0 +1,46 @@
+using sysbus
+
+$iterations?=100000
+$peripherals?=1
+
+cpu AssembleBlock 0x10000000 """
+    # Renode emulator controller init and start time measurement
+    li s0, 0x0A000000
+    li t0, 0xDEADBEF2
+    sw t0, 0(s0)
+    sw zero, 0x2C(s0)
+
+    li t6, 0x1000
+    addi s2, s2, -1
+    slli s2, s2, 12
+    li t4, 0
+    li s3, 0
+loop:
+    li t0, 0x09000000
+    add t0, t0, t4
+    li t2, 1
+    sw t2, 0(t0)
+    lw t3, 0(t0)
+    bnez t3, error
+    add t4, t4, t6
+    and t4, t4, s2
+    addi s1, s1, -1
+    bnez s1, loop
+    j done
+error:
+    li s3, 1
+    li t0, 0x10001000
+    sw t2, 0(t0)
+done:
+    li t2, 1
+    sw t2, 0x2C(s0)
+    # Tell the SystemC emulation to exit
+    li t0, 0x09003FFC
+    sw s3, 0(t0)
+    j .
+"""
+
+cpu SetRegister "s1" $iterations
+cpu SetRegister "s2" $peripherals
+cpu PC 0x10000000
+cpu IsHalted false

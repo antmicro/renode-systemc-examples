@@ -1,0 +1,14 @@
+memory: Memory.MappedMemory @ sysbus 0x10000000
+    size: 0x10000
+
+cpu: CPU.RiscV32 @ sysbus
+    cpuType: "rv32i"
+    timeProvider: empty
+    IsHalted: true
+
+controller: Miscellaneous.EmulatorController @ sysbus 0x0A000000
+
+peripheral0: Mocks.MockDoubleWordPeripheralWithOnlyRegionReadMethod @ sysbus <0x09000000, +0x1000>
+peripheral1: Mocks.MockDoubleWordPeripheralWithOnlyRegionReadMethod @ sysbus <0x09001000, +0x1000>
+peripheral2: Mocks.MockDoubleWordPeripheralWithOnlyRegionReadMethod @ sysbus <0x09002000, +0x1000>
+peripheral3: Mocks.MockDoubleWordPeripheralWithOnlyRegionReadMethod @ sysbus <0x09003000, +0x1000>

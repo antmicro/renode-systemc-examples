@@ -42,6 +42,12 @@ To compile the examples with custom SystemC builds, use `-DUSER_SYSTEMC_LIB_DIR`
 the directory with SystemC binaries and `-DUSER_SYSTEMC_INCLUDE_DIR` to provide the path to headers.
 If these are missing, the build script will attempt to use a system-wide SystemC installation.
 
+### Benchmarks
+
+Benchmarks host Renode via `librenode` and require a Renode build including the native interface
+(i.e. built with the `--shared` flag, or a package containing it). To include them
+in the root build, pass `-DBUILD_BENCHMARKS=ON`.
+
 ### SystemC distribution and C++ standard version
 
 SystemC libraries are compiled against a particular version of the C++
