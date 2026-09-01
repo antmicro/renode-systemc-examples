@@ -30,3 +30,16 @@ endif()
 if(NOT TARGET renode_bridge)
     add_subdirectory(${systemc_plugin} ${CMAKE_BINARY_DIR}/SystemCModule)
 endif()
+
+if(USE_RENODE_NATIVE_INTERFACE)
+    # Build renode_bridge against the DNNE-generated librenode API so SystemC
+    # can host Renode and use SystemCPeripheral.UseNative.
+    set(native_interface_cmake "${renode_root}/tools/NativeInterface/cmake/renode.cmake")
+    if(NOT EXISTS "${native_interface_cmake}")
+        message(FATAL_ERROR "Couldn't find NativeInterface CMake helper at: ${native_interface_cmake}")
+    endif()
+
+    include("${native_interface_cmake}")
+    target_compile_definitions(renode_bridge PRIVATE RENODE_NATIVE_INTERFACE)
+    target_link_libraries(renode_bridge renode::renode)
+endif()
