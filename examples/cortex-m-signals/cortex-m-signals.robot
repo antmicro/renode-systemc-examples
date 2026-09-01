@@ -272,6 +272,7 @@ Lockup Signal Should Be Cleared On Reset
     # Use a valid reset vector so leaving reset doesn't immediately enter a new Lockup.
     Execute Command                 sysbus WriteDoubleWord ${VTOR_INITIAL_ADDRESS} ${LOCKUP_STACK_TOP}
     Execute Command                 sysbus WriteDoubleWord ${{${VTOR_INITIAL_ADDRESS} + 0x4}} ${{${LOCKUP_CODE_ADDRESS} | 1}}
+    Execute Command                 cpu AssembleBlock ${LOCKUP_CODE_ADDRESS} "b ."
 
     Trigger SystemC Signal ${SIGNAL_CORE_RESET_IN}
     Wait For Cpu To Be Held In Reset
