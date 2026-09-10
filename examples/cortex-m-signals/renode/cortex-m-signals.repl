@@ -6,7 +6,9 @@ cortexMBundle: SystemC.CortexMBundle
     nvic: nvic
     dwt: dwt
 
-signals: SystemC.SystemCCortexMSignalsUnit @ sysbus <0x10000000, +0xfffffff>
+signals: SystemC.SystemCCortexMSignalsUnit @ {
+        sysbus new Bus.BusRangeRegistration { address: 0x10000000; size: 0xfffffff; cpu: cpu };
+    }
     cortexMBundles: [cortexMBundle]
     address: "127.0.0.1"
     port: 4242
