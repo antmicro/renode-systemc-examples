@@ -105,10 +105,10 @@ Wait For SystemC Signal ${signal}
     Wait For Log Entry              SystemC-triggered GPIO ${signal}, value ${value}
 
 Wait For Cpu To Be Held In Reset
-    Wait For Log Entry              signals: Cpu halted after reset signal assertion  level=Debug
+    Wait For Log Entry              signals: CPU halted after reset signal assertion  level=Debug
 
 Wait For Cpu And Peripherals To Leave Reset
-    Wait For Log Entry              signals: Cpu and peripherals were reset after signal deassertion  level=Debug
+    Wait For Log Entry              signals: CPU and peripherals were reset after signal deassertion  level=Debug
 
 Enter Instruction-Time Lockup
     Execute Command                 sysbus UnhandledAccessBehaviour ThrowException
