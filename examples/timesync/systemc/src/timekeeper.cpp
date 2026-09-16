@@ -4,6 +4,7 @@
 
 #include "timekeeper.h"
 #include <iostream>
+#include <cstdint>
 #include <assert.h>
 
 timekeeper::timekeeper(sc_core::sc_module_name name) {
