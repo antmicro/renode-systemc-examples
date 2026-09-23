@@ -64,6 +64,7 @@ Create Machine
     Execute Command                 emulation SetGlobalQuantum "${QUANTUM}"
     Execute Command                 sysbus.cortexMProxy SystemCExecutablePath @${SYSTEMC_BINARY}
     Execute Command                 cortexMProxy DisableDebugAccess false
+    Execute Command                 emulation SetGlobalSerialExecution true
 
 Start Core
     [Arguments]                     ${cpu}  ${pc}  ${assembly}  &{registers}
