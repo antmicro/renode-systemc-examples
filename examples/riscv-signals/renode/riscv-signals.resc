@@ -1,0 +1,7 @@
+using sysbus
+mach create "riscv-signals"
+
+machine LoadPlatformDescription $ORIGIN/riscv-signals.repl
+
+sysbus LogPeripheralAccess signals true
+sysbus.signals SystemCExecutablePath $ORIGIN/../bin/riscv-signals
