@@ -8,4 +8,5 @@
 - multiple-peripherals/multiple-peripherals.robot
 - cortex-m-signals/cortex-m-signals.robot
 - riscv-signals/riscv-signals.robot
+- hmp-signals/hmp-signals.robot
 - multi-core/multi-core-read-write.robot

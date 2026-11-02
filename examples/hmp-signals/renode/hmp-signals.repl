@@ -1,0 +1,57 @@
+riscvRam: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x10000
+
+armRam: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x10000
+
+riscv: CPU.RiscV32 @ sysbus
+    cpuType: "rv32imac_zicsr_zifencei"
+    timeProvider: clint
+    hartId: 0
+    IsHalted: true
+
+arm: CPU.CortexM @ sysbus
+    cpuType: "cortex-m4"
+    cpuId: 1
+    nvic: nvic
+    IsHalted: true
+
+plic: IRQControllers.PlatformLevelInterruptController @ sysbus 0x0C000000
+    0 -> riscv@11
+    numberOfSources: 15
+    numberOfContexts: 1
+
+clint: IRQControllers.CoreLevelInterruptor @ sysbus 0x02000000
+    [0,1] -> riscv@[3,7]
+    frequency: 100000000
+
+nvic: IRQControllers.NVIC @ {
+    sysbus new Bus.BusPointRegistration { address: 0xe000e000; cpu: arm }
+}
+    -> arm@0
+
+dwt: Miscellaneous.DWT @ {
+    sysbus new Bus.BusPointRegistration { address: 0xe0001000; cpu: arm }
+}
+    frequency: 50000000
+
+riscvBundle: SystemC.RiscVBundle
+    cpu: riscv
+    interruptController: plic
+    timer: clint
+    bootAddress: 0x80000000
+    numberOfInterrupts: 16
+    nmiVectorAddress: 0x80000200
+    nmiVectorLength: 1
+
+armBundle: SystemC.CortexMBundle
+    cpu: arm
+    nvic: nvic
+    dwt: dwt
+
+signals: SystemC.SystemCCPUSignalsUnit @ {
+    sysbus new Bus.BusRangeRegistration { address: 0x60000000; size: 0x2000; cpu: riscv };
+    sysbus new Bus.BusRangeRegistration { address: 0x60000000; size: 0x2000; cpu: arm };
+}
+    bundles: [riscvBundle, armBundle]
+    timeSyncPeriodUS: 100

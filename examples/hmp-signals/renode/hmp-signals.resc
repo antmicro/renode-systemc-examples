@@ -1,0 +1,13 @@
+using sysbus
+mach create "hmp-signals"
+
+machine LoadPlatformDescription $ORIGIN/hmp-signals.repl
+
+# Add reset handlers for both architectures
+riscv AssembleBlock 0x80000000 "j ."
+riscv AssembleBlock 0x80000200 "j ."
+sysbus WriteDoubleWord 0x20000000 0x20010000
+sysbus WriteDoubleWord 0x20000004 0x20000101
+arm AssembleBlock 0x20000100 "b ."
+
+signals SystemCExecutablePath $ORIGIN/../bin/hmp-signals
