@@ -17,5 +17,6 @@ void bus::b_transport(tlm::tlm_generic_payload &payload, sc_core::sc_time &delay
   } else {
     payload.set_address(address - 0x1000);
     memory_initiator_socket->b_transport(payload, delay);
+    payload.set_address(address);
   }
 }
