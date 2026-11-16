@@ -157,7 +157,7 @@ jobs:
           fi
 
       - name: Download and build Renode
-        uses: antmicro/renode-test-action@v5.0.0
+        uses: antmicro/renode-test-action@main
         with:
           renode-repository: ${{ inputs.renode_gitrepo || 'https://github.com/renode/renode' }}
           renode-revision: ${{ inputs.renode_gitrev || 'master' }}
@@ -263,7 +263,7 @@ jobs:
           path: artifacts/shared_libs
 
       - name: Download and build Renode
-        uses: antmicro/renode-test-action@v5.0.0
+        uses: antmicro/renode-test-action@main
         with:
           renode-repository: ${{ inputs.renode_gitrepo || 'https://github.com/renode/renode' }}
           renode-revision: ${{ inputs.renode_gitrev || 'master' }}
