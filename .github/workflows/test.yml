@@ -271,6 +271,13 @@ jobs:
       - name: Run tests (native)
         shell: bash
         run: |
+          RENODE_DIR="$(dirname $(which renode-test))"
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            source "$RENODE_DIR/.venv/Scripts/activate"
+          else
+            source "$RENODE_DIR/.venv/bin/activate"
+          fi
+
           for example in artifacts/shared_libs/*; do
             example_name="$(basename $example | sed -e 's/\.so$//' -e 's/\.dll$//' -e 's/^lib//' | tr '_' '-')"
             if [ "${{ runner.os }}" = "Linux" ]; then
@@ -294,6 +301,13 @@ jobs:
         shell: bash
         if: always()
         run: |
+          RENODE_DIR="$(dirname $(which renode-test))"
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            source "$RENODE_DIR/.venv/Scripts/activate"
+          else
+            source "$RENODE_DIR/.venv/bin/activate"
+          fi
+
           for example in artifacts/example_binaries/*; do
             example_name="$(basename $example | sed -e 's/x64-systemc--//' -e 's/.elf//' -e 's/.exe//')"
             mkdir -p examples/$example_name/bin
